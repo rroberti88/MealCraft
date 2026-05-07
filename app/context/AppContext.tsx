@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
-// Modelli dati basati sulla traccia
+// Definizione modelli dati
 export interface Recipe {
   id: string;
   nome: string;
@@ -11,6 +11,8 @@ export interface Recipe {
   difficolta: 'Bassa' | 'Media' | 'Alta';
   porzioni: number;
   ingredienti: { nome: string; qta: string }[];
+  procedimento: string;
+  immagine: string; // Campo per l'URL della foto
 }
 
 export interface PantryItem {
@@ -19,92 +21,82 @@ export interface PantryItem {
   categoria: string;
   quantita: number;
   unitaMisura: string;
-  scadenza: string; // Formato YYYY-MM-DD
+  scadenza: string;
 }
 
 interface AppContextType {
   recipes: Recipe[];
   pantry: PantryItem[];
-  setRecipes: React.Dispatch<React.SetStateAction<Recipe[]>>;
-  setPantry: React.Dispatch<React.SetStateAction<PantryItem[]>>;
-  addRecipe: (r: Recipe) => void;
-  addToPantry: (i: PantryItem) => void;
+  setPantry: React.Dispatch<React.SetStateAction<PantryItem[]>>; // Risolve errore
+  addToPantry: (item: PantryItem) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [pantry, setPantry] = useState<PantryItem[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+  
+  // Database Ricette con immagini fotorealistiche
+  const [recipes] = useState<Recipe[]>([
+    {
+      id: 'r1',
+      nome: 'Salmone al Limone',
+      descrizione: 'Un secondo leggero e profumato, perfetto per una cena sana.',
+      categoria: 'Secondi',
+      tempoPreparazione: 20,
+      difficolta: 'Bassa',
+      porzioni: 2,
+      ingredienti: [
+        { nome: 'Tranci di salmone', qta: '2' },
+        { nome: 'Limone', qta: '1' },
+        { nome: 'Prezzemolo', qta: 'qb' }
+      ],
+      procedimento: "1. Adagia i tranci su carta forno. 2. Copri con fette di limone. 3. Inforna a 180°C per 15 minuti.",
+      immagine: 'http://googleusercontent.com/image_collection/image_retrieval/2990935221230499478_0'
+    },
+    {
+      id: 'r2',
+      nome: 'Risotto ai Funghi',
+      descrizione: 'Un classico della cucina italiana, cremoso e saporito.',
+      categoria: 'Primi',
+      tempoPreparazione: 40,
+      difficolta: 'Media',
+      porzioni: 4,
+      ingredienti: [
+        { nome: 'Riso Carnaroli', qta: '320g' },
+        { nome: 'Funghi Porcini', qta: '300g' },
+        { nome: 'Brodo Vegetale', qta: '1L' }
+      ],
+      procedimento: "1. Tosta il riso. 2. Aggiungi i funghi e sfuma col brodo un mestolo alla volta. 3. Manteca con burro e parmigiano.",
+      immagine: 'http://googleusercontent.com/image_collection/image_retrieval/6892171262187972154_0'
+    }
+  ]);
 
-  // 1. CARICAMENTO DATI ALL'AVVIO (Persistenza - 2 punti traccia)
+  // Caricamento dati persistenti all'avvio
   useEffect(() => {
-    const loadStoredData = async () => {
-      try {
-        const savedPantry = await AsyncStorage.getItem('@pantry_storage');
-        const savedRecipes = await AsyncStorage.getItem('@recipes_storage');
-        
-        if (savedPantry) setPantry(JSON.parse(savedPantry));
-        else {
-          // Dati iniziali se l'app è vuota (Primo avvio)
-          setPantry([
-            { id: '1', nome: 'Farina', categoria: 'Base', quantita: 500, unitaMisura: 'g', scadenza: '2026-12-10' },
-            { id: '2', nome: 'Uova', categoria: 'Proteine', quantita: 6, unitaMisura: 'pz', scadenza: '2026-05-09' },
-            { id: '3', nome: 'Latte', categoria: 'Bibite', quantita: 1, unitaMisura: 'L', scadenza: '2026-05-07' },
-          ]);
-        }
-        
-        if (savedRecipes) setRecipes(JSON.parse(savedRecipes));
-        setIsLoaded(true);
-      } catch (e) {
-        console.error("Errore nel caricamento dati", e);
-      }
-    };
-    loadStoredData();
+    AsyncStorage.getItem('@pantry').then(data => {
+      if (data) setPantry(JSON.parse(data));
+    });
   }, []);
 
-  // 2. SALVATAGGIO AUTOMATICO (Ogni volta che cambiano i dati)
+  // Salvataggio automatico su disco
   useEffect(() => {
-    if (isLoaded) {
-      AsyncStorage.setItem('@pantry_storage', JSON.stringify(pantry));
-    }
+    AsyncStorage.setItem('@pantry', JSON.stringify(pantry));
   }, [pantry]);
 
-  useEffect(() => {
-    if (isLoaded) {
-      AsyncStorage.setItem('@recipes_storage', JSON.stringify(recipes));
-    }
-  }, [recipes]);
-
-  // Funzioni helper
-  const addRecipe = (r: Recipe) => setRecipes((prev) => [...prev, r]);
-  
   const addToPantry = (newItem: PantryItem) => {
-    setPantry((currentPantry) => {
-      // Controlliamo se il prodotto esiste già per sommare la quantità (Usabilità avanzata)
-      const existingIndex = currentPantry.findIndex(
-        item => item.nome.toLowerCase() === newItem.nome.toLowerCase()
-      );
-
-      if (existingIndex !== -1) {
-        const updatedPantry = [...currentPantry];
-        updatedPantry[existingIndex].quantita += newItem.quantita;
-        return updatedPantry;
+    setPantry(prev => {
+      const existing = prev.find(i => i.nome.toLowerCase() === newItem.nome.toLowerCase());
+      if (existing) {
+        return prev.map(i => i.nome.toLowerCase() === newItem.nome.toLowerCase() 
+          ? { ...i, quantita: i.quantita + newItem.quantita } : i);
       }
-      return [...currentPantry, newItem];
+      return [...prev, newItem];
     });
   };
 
   return (
-    <AppContext.Provider value={{ 
-      recipes, 
-      pantry, 
-      setRecipes, 
-      setPantry, 
-      addRecipe, 
-      addToPantry 
-    }}>
+    <AppContext.Provider value={{ recipes, pantry, setPantry, addToPantry }}>
       {children}
     </AppContext.Provider>
   );
