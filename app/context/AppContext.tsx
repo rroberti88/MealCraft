@@ -6,9 +6,9 @@ export interface Recipe {
   nome: string;
   descrizione: string;
   categoria: string;
-  tempoPreparazione: number; // in minuti [cite: 26]
-  difficolta: 'Bassa' | 'Media' | 'Alta'; // [cite: 27]
-  porzioni: number; // [cite: 28]
+  tempoPreparazione: number;
+  difficolta: 'Bassa' | 'Media' | 'Alta';
+  porzioni: number;
   ingredienti: { nome: string; qta: string }[];
 }
 
@@ -16,14 +16,16 @@ export interface PantryItem {
   id: string;
   nome: string;
   categoria: string;
-  quantita: number; // [cite: 43]
-  unitaMisura: string; // [cite: 44]
-  scadenza: string; // YYYY-MM-DD [cite: 45]
+  quantita: number;
+  unitaMisura: string;
+  scadenza: string; // Formato YYYY-MM-DD
 }
 
 interface AppContextType {
   recipes: Recipe[];
   pantry: PantryItem[];
+  setRecipes: React.Dispatch<React.SetStateAction<Recipe[]>>; // Per aggiornamenti massivi
+  setPantry: React.Dispatch<React.SetStateAction<PantryItem[]>>; // Fondamentale per eliminare/filtrare
   addRecipe: (r: Recipe) => void;
   addToPantry: (i: PantryItem) => void;
 }
@@ -31,19 +33,38 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
-  // Dati fittizi iniziali per testare statistiche e filtri [cite: 7, 115]
+  // Dati fittizi aggiornati al 7 Maggio 2026 per testare i filtri
   const [recipes, setRecipes] = useState<Recipe[]>([
-    { id: '1', nome: 'Pasta al Pomodoro', descrizione: '...', categoria: 'Primi', tempoPreparazione: 15, difficolta: 'Bassa', porzioni: 2, ingredienti: [] }
-  ]);
-  const [pantry, setPantry] = useState<PantryItem[]>([
-    { id: '1', nome: 'Farina', categoria: 'Base', quantita: 500, unitaMisura: 'g', scadenza: '2026-05-10' }
+    { 
+      id: '1', 
+      nome: 'Pasta al Pomodoro', 
+      descrizione: 'Un classico italiano', 
+      categoria: 'Primi', 
+      tempoPreparazione: 15, 
+      difficolta: 'Bassa', 
+      porzioni: 2, 
+      ingredienti: [{ nome: 'Pasta', qta: '200g' }] 
+    }
   ]);
 
-  const addRecipe = (r: Recipe) => setRecipes([...recipes, r]);
-  const addToPantry = (i: PantryItem) => setPantry([...pantry, i]);
+  const [pantry, setPantry] = useState<PantryItem[]>([
+    { id: '1', nome: 'Farina', categoria: 'Base', quantita: 500, unitaMisura: 'g', scadenza: '2026-12-10' },
+    { id: '2', nome: 'Uova', categoria: 'Frigo', quantita: 6, unitaMisura: 'pz', scadenza: '2026-05-09' }, // SCADE TRA 2 GIORNI (Apparirà rossa)
+    { id: '3', nome: 'Latte', categoria: 'Frigo', quantita: 1, unitaMisura: 'L', scadenza: '2026-05-07' }, // SCADE OGGI
+  ]);
+
+  const addRecipe = (r: Recipe) => setRecipes((prev) => [...prev, r]);
+  const addToPantry = (i: PantryItem) => setPantry((prev) => [...prev, i]);
 
   return (
-    <AppContext.Provider value={{ recipes, pantry, addRecipe, addToPantry }}>
+    <AppContext.Provider value={{ 
+      recipes, 
+      pantry, 
+      setRecipes, 
+      setPantry, 
+      addRecipe, 
+      addToPantry 
+    }}>
       {children}
     </AppContext.Provider>
   );
