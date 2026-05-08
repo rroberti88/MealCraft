@@ -1,5 +1,5 @@
-import React, { createContext, ReactNode, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 export interface Recipe {
   id: string;
@@ -24,14 +24,25 @@ export interface PantryItem {
   scadenza: string;
 }
 
+export interface ShoppingItem {
+  id: string;
+  nome: string;
+  preso: boolean;
+}
+
 interface AppContextType {
   recipes: Recipe[];
   pantry: PantryItem[];
+  shoppingList: ShoppingItem[];
+  plan: Record<string, any>;
   setPantry: React.Dispatch<React.SetStateAction<PantryItem[]>>;
   addToPantry: (item: PantryItem) => void;
   addRecipe: (recipe: Recipe) => void;
   updateRecipe: (recipe: Recipe) => void;
   deleteRecipe: (id: string) => void;
+  addToShoppingList: (items: string[]) => void;
+  updatePlan: (date: string, mealType: string, item: any) => void;
+  removeFromPlan: (date: string, mealType: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -39,20 +50,47 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [pantry, setPantry] = useState<PantryItem[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([]);
+  const [plan, setPlan] = useState<Record<string, any>>({});
 
   useEffect(() => {
     const loadData = async () => {
       try {
         const savedPantry = await AsyncStorage.getItem('@pantry');
         const savedRecipes = await AsyncStorage.getItem('@recipes');
+        const savedShopping = await AsyncStorage.getItem('@shopping');
+        const savedPlan = await AsyncStorage.getItem('@plan');
         if (savedPantry) setPantry(JSON.parse(savedPantry));
         if (savedRecipes) setRecipes(JSON.parse(savedRecipes));
+        if (savedShopping) setShoppingList(JSON.parse(savedShopping));
+        if (savedPlan) setPlan(JSON.parse(savedPlan));
       } catch (e) {
-        console.error("Errore nel caricamento dei dati", e);
+        console.error(e);
       }
     };
     loadData();
   }, []);
+
+  const addToShoppingList = async (itemNames: string[]) => {
+    const newItems = itemNames.map(nome => ({ id: Math.random().toString(), nome, preso: false }));
+    const updated = [...shoppingList, ...newItems];
+    setShoppingList(updated);
+    await AsyncStorage.setItem('@shopping', JSON.stringify(updated));
+  };
+
+  const updatePlan = async (date: string, mealType: string, item: any) => {
+    const newPlan = { ...plan, [date]: { ...(plan[date] || {}), [mealType]: item } };
+    setPlan(newPlan);
+    await AsyncStorage.setItem('@plan', JSON.stringify(newPlan));
+  };
+
+  const removeFromPlan = async (date: string, mealType: string) => {
+    const newDay = { ...plan[date] };
+    delete newDay[mealType];
+    const newPlan = { ...plan, [date]: newDay };
+    setPlan(newPlan);
+    await AsyncStorage.setItem('@plan', JSON.stringify(newPlan));
+  };
 
   const addRecipe = async (newRecipe: Recipe) => {
     const updated = [newRecipe, ...recipes];
@@ -86,7 +124,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AppContext.Provider value={{ recipes, pantry, setPantry, addToPantry, addRecipe, updateRecipe, deleteRecipe }}>
+    <AppContext.Provider value={{ 
+      recipes, pantry, shoppingList, plan, 
+      setPantry, addToPantry, addRecipe, updateRecipe, deleteRecipe,
+      addToShoppingList, updatePlan, removeFromPlan 
+    }}>
       {children}
     </AppContext.Provider>
   );
@@ -94,6 +136,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
 export const useAppContext = () => {
   const context = useContext(AppContext);
-  if (!context) throw new Error('useAppContext deve essere usato dentro AppProvider');
+  if (!context) throw new Error('useAppContext must be used within AppProvider');
   return context;
 };
