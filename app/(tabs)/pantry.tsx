@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
   FlatList,
@@ -25,12 +26,16 @@ const CATEGORIES = [
   { id: 'Frutta&Verdura', label: 'Frutta&Verdura', icon: 'leaf-outline' },
 ];
 
-
 type FilterStatus = 'Tutti' | 'Scadenze' | 'Esaurimento' | 'InStato';
 
 export default function PantryScreen() {
   const { pantry, setPantry } = useAppContext();
-  
+  const router = useRouter(); 
+  const params = useLocalSearchParams(); 
+
+  const isPickerMode = params?.pickerMode === 'true';
+  const mealType = params?.mealType;
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Tutte');
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('Tutti');
@@ -60,6 +65,20 @@ export default function PantryScreen() {
     } catch (e) { return null; }
   };
 
+  const handleSelectItem = (item: any) => {
+    router.push({
+      pathname: '/planner',
+      params: {
+        selectedItem: 'true',
+        mealType: mealType,
+        item: JSON.stringify(item),
+        origin: 'pantry'
+      }
+    });
+    router.setParams({ pickerMode: undefined, mealType: undefined });
+  };
+  // ---------------------------------------
+
   const filteredItems = useMemo(() => {
     return pantry.filter(item => {
       const matchesSearch = item.nome.toLowerCase().includes(searchQuery.toLowerCase());
@@ -72,7 +91,6 @@ export default function PantryScreen() {
       } else if (statusFilter === 'Esaurimento') {
         matchesStatus = Number(item.quantita) <= 2;
       } else if (statusFilter === 'InStato') {
-       
         matchesStatus = diff !== null && diff > 3;
       }
       
@@ -144,7 +162,17 @@ export default function PantryScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.topSection}>
-        <Text style={styles.headerTitle}>Dispensa Intelligente</Text>
+        {}
+        <Text style={styles.headerTitle}>
+          {isPickerMode ? `Scegli per ${mealType}` : "Dispensa Intelligente"}
+        </Text>
+        
+        {isPickerMode && (
+          <TouchableOpacity onPress={() => router.setParams({ pickerMode: undefined })}>
+            <Text style={{color: '#FF3B30', fontWeight: 'bold', marginBottom: 10}}>← Annulla selezione</Text>
+          </TouchableOpacity>
+        )}
+
         <View style={styles.searchContainer}>
           <Ionicons name="search" size={20} color="#999" />
           <TextInput style={styles.searchInput} placeholder="Cerca ingredienti..." value={searchQuery} onChangeText={setSearchQuery} />
@@ -166,7 +194,6 @@ export default function PantryScreen() {
         </ScrollView>
       </View>
 
-      {}
       <View style={styles.statusRowContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.statusRow}>
           <TouchableOpacity onPress={() => setStatusFilter('Tutti')} style={[styles.statusTab, statusFilter === 'Tutti' && styles.statusTabActive]}>
@@ -204,10 +231,21 @@ export default function PantryScreen() {
                 <Text style={[styles.itemExpiry, diff !== null && diff < 0 && { color: '#FF3B30', fontWeight: 'bold' }]}>
                   Scadenza: {item.scadenza} {diff !== null && diff < 0 ? '(SCADUTO)' : ''}
                 </Text>
+
+                {}
+                {isPickerMode && (
+                  <TouchableOpacity style={styles.selectBtn} onPress={() => handleSelectItem(item)}>
+                    <Ionicons name="add-circle" size={16} color="#fff" />
+                    <Text style={styles.selectBtnText}> SELEZIONA</Text>
+                  </TouchableOpacity>
+                )}
               </View>
-              <TouchableOpacity onPress={() => setPantry(pantry.filter(i => i.id !== item.id))}>
-                <Ionicons name="trash-outline" size={22} color="#FF3B30" />
-              </TouchableOpacity>
+              
+              {!isPickerMode && (
+                <TouchableOpacity onPress={() => setPantry(pantry.filter(i => i.id !== item.id))}>
+                  <Ionicons name="trash-outline" size={22} color="#FF3B30" />
+                </TouchableOpacity>
+              )}
             </View>
           );
         }}
@@ -218,9 +256,7 @@ export default function PantryScreen() {
         <View style={styles.modalOverlay}>
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalContent}>
             <Text style={styles.modalTitle}>Nuovo Ingrediente</Text>
-            
             <TextInput style={styles.input} placeholder="Nome prodotto *" value={newItem.nome} onChangeText={t => setNewItem({...newItem, nome: t})} />
-            
             <Text style={styles.label}>Categoria *</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 15 }}>
               {CATEGORIES.map(cat => (
@@ -229,14 +265,11 @@ export default function PantryScreen() {
                 </TouchableOpacity>
               ))}
             </ScrollView>
-
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <TextInput style={[styles.input, { flex: 1 }]} placeholder="Quantità *" keyboardType="numeric" value={newItem.quantita} onChangeText={t => setNewItem({...newItem, quantita: t})} />
               <TextInput style={[styles.input, { flex: 1 }]} placeholder="Unità (es. kg)" value={newItem.unitaMisura} onChangeText={t => setNewItem({...newItem, unitaMisura: t})} />
             </View>
-
             <TextInput style={styles.input} placeholder="Scadenza (AAAA-MM-GG) *" value={newItem.scadenza} onChangeText={t => setNewItem({...newItem, scadenza: t})} />
-
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
               <TouchableOpacity style={[styles.btn, { backgroundColor: '#8E8E93' }]} onPress={() => setFormVisible(false)}><Text style={styles.btnText}>Annulla</Text></TouchableOpacity>
               <TouchableOpacity style={[styles.btn, { backgroundColor: '#007AFF' }]} onPress={handleSave}><Text style={styles.btnText}>Salva</Text></TouchableOpacity>
@@ -274,16 +307,19 @@ export default function PantryScreen() {
         </View>
       </Modal>
 
-      <TouchableOpacity style={styles.fab} onPress={() => setFormVisible(true)}>
-        <Ionicons name="add" size={35} color="white" />
-      </TouchableOpacity>
+      {!isPickerMode && (
+        <TouchableOpacity style={styles.fab} onPress={() => setFormVisible(true)}>
+          <Ionicons name="add" size={35} color="white" />
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  
   container: { flex: 1, backgroundColor: '#F8F9FB' },
-  topSection: { padding: 20, backgroundColor: '#fff', borderBottomLeftRadius: 30, borderBottomRightRadius: 30, elevation: 5 },
+  topSection: { padding: 20, backgroundColor: '#fff', borderBottomLeftRadius: 30, borderBottomRightRadius: 30, elevation: 5, paddingTop: 60 },
   headerTitle: { fontSize: 24, fontWeight: 'bold', marginBottom: 15 },
   searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F3F6', paddingHorizontal: 15, borderRadius: 15, height: 45 },
   searchInput: { flex: 1, marginLeft: 10 },
@@ -319,5 +355,8 @@ const styles = StyleSheet.create({
   btnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   alertContainer: { backgroundColor: '#fff', width: '85%', borderRadius: 30, padding: 25, alignItems: 'center', borderTopWidth: 8 },
   alertTitle: { fontSize: 20, fontWeight: '900', marginTop: 15, textAlign: 'center' },
-  alertMessage: { fontSize: 16, color: '#444', textAlign: 'center', marginVertical: 20, lineHeight: 22 }
+  alertMessage: { fontSize: 16, color: '#444', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
+ 
+  selectBtn: { backgroundColor: '#007AFF', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, marginTop: 8, flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start' },
+  selectBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 12 }
 });

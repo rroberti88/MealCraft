@@ -79,17 +79,50 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updatePlan = async (date: string, mealType: string, item: any) => {
-    const newPlan = { ...plan, [date]: { ...(plan[date] || {}), [mealType]: item } };
+    const newPlan = { ...plan };
+  
+   
+    if (!newPlan[date]) {
+      newPlan[date] = {};
+    }
+  
+    if (!Array.isArray(newPlan[date][mealType])) {
+      newPlan[date][mealType] = [];
+    }
+  
+    const newItem = {
+      ...item,
+      instanceId: Date.now().toString() + Math.random().toString(36).substr(2, 9)
+    };
+  
+    newPlan[date][mealType] = [...newPlan[date][mealType], newItem];
+  
     setPlan(newPlan);
     await AsyncStorage.setItem('@plan', JSON.stringify(newPlan));
   };
 
-  const removeFromPlan = async (date: string, mealType: string) => {
-    const newDay = { ...plan[date] };
-    delete newDay[mealType];
-    const newPlan = { ...plan, [date]: newDay };
-    setPlan(newPlan);
-    await AsyncStorage.setItem('@plan', JSON.stringify(newPlan));
+  const removeFromPlan = async (date: string, mealType: string, instanceId: string) => {
+   
+    const newPlan = { ...plan };
+  
+   
+    if (newPlan[date] && newPlan[date][mealType]) {
+     
+      const updatedMealArray = newPlan[date][mealType].filter(
+        (item: any) => item.instanceId !== instanceId
+      );
+  
+     
+      if (updatedMealArray.length === 0) {
+        delete newPlan[date][mealType];
+      } else {
+        newPlan[date][mealType] = updatedMealArray;
+      }
+  
+    
+      setPlan(newPlan);
+      await AsyncStorage.setItem('@plan', JSON.stringify(newPlan));
+    }
   };
 
   const addRecipe = async (newRecipe: Recipe) => {
