@@ -116,7 +116,7 @@ export default function PantryScreen() {
       onConfirm: () => setCustomAlert(prev => ({ ...prev, visible: false }))
     });
   };
-//stile3
+
   const handleSave = () => {
     if (!newItem.nome || !newItem.quantita || !newItem.scadenza || !newItem.categoria) {
       setCustomAlert({
