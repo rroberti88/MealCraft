@@ -3,163 +3,67 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
-  Alert,
   Modal,
+  Pressable,
   SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { useAppContext } from '../context/AppContext';
 
-const PlannerScreen = () => {
-  const {
-    plan,
-    updatePlan,
-    removeFromPlan,
-    pantry,
-    addToShoppingList,
-  } = useAppContext();
-
+export default function PlannerScreen() {
+  const { plan, updatePlan, removeFromPlan } = useAppContext();
   const params = useLocalSearchParams();
   const router = useRouter();
-
-  const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split('T')[0]
-  );
-
+  
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [showCalendar, setShowCalendar] = useState(false);
-
-  const handleSelection = useCallback(
-    (mealType: string, item: any, origin: 'recipe' | 'pantry') => {
-      if (!mealType || !item) return;
-
-      if (origin === 'recipe') {
-        const missing =
-          item.ingredienti
-            ?.filter(
-              (ing: any) =>
-                !pantry.some(
-                  (p: any) =>
-                    p.nome?.toLowerCase().trim() ===
-                    ing.nome?.toLowerCase().trim()
-                )
-            )
-            .map((ing: any) => ing.nome) || [];
-
-        if (missing.length > 0) {
-          Alert.alert(
-            'Ingredienti Mancanti',
-            `Per "${item.nome}" mancano: ${missing.join(', ')}`,
-            [
-              {
-                text: 'Annulla',
-                style: 'cancel',
-              },
-              {
-                text: 'Aggiungi alla Spesa',
-                onPress: () => {
-                  updatePlan(selectedDate, mealType, {
-                    ...item,
-                    type: 'recipe',
-                  });
-
-                  if (addToShoppingList) {
-                    missing.forEach((name: string) => {
-                      addToShoppingList({
-                        nome: name,
-                        checked: false,
-                      });
-                    });
-                  }
-
-                  router.push('/shopping');
-                },
-              },
-              {
-                text: 'Aggiungi comunque',
-                onPress: () => {
-                  updatePlan(selectedDate, mealType, {
-                    ...item,
-                    type: 'recipe',
-                  });
-                },
-              },
-            ]
-          );
-        } else {
-          updatePlan(selectedDate, mealType, {
-            ...item,
-            type: 'recipe',
-          });
-        }
-      } else {
-        updatePlan(selectedDate, mealType, {
-          ...item,
-          type: 'pantry',
-        });
-      }
-    },
-    [pantry, selectedDate, updatePlan, router, addToShoppingList]
-  );
+  
+  const [selectionModalVisible, setSelectionModalVisible] = useState(false);
+  const [activeMealType, setActiveMealType] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
-      if (
-        params?.selectedItem === 'true' &&
-        params?.item &&
-        params?.mealType
-      ) {
+      if (params?.selectedItem === 'true' && params?.item) {
         try {
-          const parsedItem =
-            typeof params.item === 'string'
-              ? JSON.parse(params.item)
-              : params.item;
+          const parsedItem = JSON.parse(params.item as string);
+          
+         
+          updatePlan(selectedDate, params.mealType as string, { 
+            ...parsedItem, 
+            origin: params.origin,
+            instanceId: Date.now().toString() 
+          });
 
-          handleSelection(
-            params.mealType as string,
-            parsedItem,
-            (params.origin as 'recipe' | 'pantry') || 'recipe'
-          );
-
-          router.replace('/planner');
-        } catch (error) {
-          console.log('Errore parsing item:', error);
+          router.setParams({ selectedItem: undefined, item: undefined, origin: undefined, mealType: undefined });
+        } catch (e) {
+          console.error("Errore parsing ritorno:", e);
         }
       }
-    }, [params, handleSelection])
+    }, [params?.selectedItem, params?.item])
   );
 
   const generateWeekDays = () => {
     const days = [];
     const baseDate = new Date(selectedDate);
     const startOfWeek = new Date(baseDate);
-
     const dayOfWeek = baseDate.getDay();
-
-    const diff =
-      baseDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-
+    const diff = baseDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
     startOfWeek.setDate(diff);
-
     for (let i = 0; i < 7; i++) {
       const date = new Date(startOfWeek);
-
       date.setDate(startOfWeek.getDate() + i);
-
       days.push({
-        label: date.toLocaleDateString('it-IT', {
-          weekday: 'short',
-        }),
+        label: date.toLocaleDateString('it-IT', { weekday: 'short' }),
         date: date.getDate().toString(),
-        fullDate: date.toISOString().split('T')[0],
+        fullDate: date.toISOString().split('T')[0]
       });
     }
-
     return days;
   };
 
@@ -168,7 +72,6 @@ const PlannerScreen = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" />
-
       <View style={styles.container}>
         <View style={styles.header}>
           <View style={styles.headerTop}>
@@ -176,355 +79,157 @@ const PlannerScreen = () => {
               <Text style={styles.welcomeText}>La tua Cucina Smart</Text>
               <Text style={styles.mainTitle}>Pianifica i pasti</Text>
             </View>
-
-            <TouchableOpacity
-              onPress={() => setShowCalendar(true)}
-              style={styles.calendarToggle}
-            >
+            <TouchableOpacity onPress={() => setShowCalendar(true)} style={styles.calendarToggle}>
               <Ionicons name="calendar" size={24} color="#3b82f6" />
             </TouchableOpacity>
           </View>
         </View>
 
-        <View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.dayList}
-          >
+        <View style={{ height: 90 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {generateWeekDays().map((item, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.dayCard,
-                  selectedDate === item.fullDate && styles.activeDayCard,
-                ]}
+              <TouchableOpacity 
+                key={index} 
+                style={[styles.dayCard, selectedDate === item.fullDate && styles.activeDayCard]}
                 onPress={() => setSelectedDate(item.fullDate)}
               >
-                <Text
-                  style={[
-                    styles.dayLabel,
-                    selectedDate === item.fullDate &&
-                      styles.activeDayText,
-                  ]}
-                >
-                  {item.label}
-                </Text>
-
-                <Text
-                  style={[
-                    styles.dayNumber,
-                    selectedDate === item.fullDate &&
-                      styles.activeDayText,
-                  ]}
-                >
-                  {item.date}
-                </Text>
+                <Text style={[styles.dayLabel, selectedDate === item.fullDate && styles.activeDayText]}>{item.label}</Text>
+                <Text style={[styles.dayNumber, selectedDate === item.fullDate && styles.activeDayText]}>{item.date}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
 
-        <Modal visible={showCalendar} animationType="fade" transparent>
-          <View style={styles.modalOverlay}>
-            <View style={styles.calendarContainer}>
-              <Calendar
-                onDayPress={(day: any) => {
-                  setSelectedDate(day.dateString);
-                  setShowCalendar(false);
-                }}
-                markedDates={{
-                  [selectedDate]: {
-                    selected: true,
-                    selectedColor: '#3b82f6',
-                  },
-                }}
-              />
-
-              <TouchableOpacity
-                style={styles.closeModal}
-                onPress={() => setShowCalendar(false)}
-              >
-                <Text style={styles.closeModalText}>Chiudi</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          style={styles.mealList}
-        >
+        <ScrollView showsVerticalScrollIndicator={false} style={styles.mealList}>
           {mealTypes.map((type) => {
-            const meal = plan?.[selectedDate]?.[type];
+           
+            const meals = Array.isArray(plan[selectedDate]?.[type]) 
+              ? plan[selectedDate][type] 
+              : (plan[selectedDate]?.[type] ? [plan[selectedDate][type]] : []);
 
             return (
               <View key={type} style={styles.slotCard}>
-                <Text style={styles.slotType}>{type}</Text>
-
-                {meal ? (
-                  <View style={styles.recipeContent}>
-                    <View style={styles.iconCircle}>
-                      <Ionicons
-                        name={
-                          meal.type === 'pantry'
-                            ? 'basket'
-                            : 'restaurant'
-                        }
-                        size={20}
-                        color="#3b82f6"
-                      />
-                    </View>
-
-                    <View style={styles.recipeInfo}>
-                      <Text style={styles.recipeTitle}>
-                        {meal.nome}
-                      </Text>
-
-                      <Text style={styles.recipeSub}>
-                        {meal.type === 'recipe'
-                          ? `${meal.tempoPreparazione || 0} min`
-                          : 'Dalla Dispensa'}
-                      </Text>
-                    </View>
-
-                    <TouchableOpacity
-                      onPress={() =>
-                        removeFromPlan(selectedDate, type)
-                      }
-                    >
-                      <Ionicons
-                        name="trash-outline"
-                        size={20}
-                        color="#ef4444"
-                      />
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  <TouchableOpacity
-                    style={styles.addButton}
+                <View style={styles.slotHeader}>
+                  <Text style={styles.slotType}>{type}</Text>
+                  {}
+                  <TouchableOpacity 
                     onPress={() => {
-                      Alert.alert(
-                        'Aggiungi',
-                        "Scegli l'origine del pasto",
-                        [
-                          {
-                            text: 'Ricette',
-                            onPress: () =>
-                              router.push({
-                                pathname: '/recipes',
-                                params: {
-                                  pickerMode: 'true',
-                                  mealType: type,
-                                  returnTo: 'planner',
-                                },
-                              }),
-                          },
-                          {
-                            text: 'Dispensa',
-                            onPress: () =>
-                              router.push({
-                                pathname: '/pantry',
-                                params: {
-                                  pickerMode: 'true',
-                                  mealType: type,
-                                  returnTo: 'planner',
-                                },
-                              }),
-                          },
-                          {
-                            text: 'Annulla',
-                            style: 'cancel',
-                          },
-                        ]
-                      );
-                    }}
-                  >
-                    <Ionicons
-                      name="add-circle-outline"
-                      size={20}
-                      color="#888"
-                    />
-
-                    <Text style={styles.addText}>
-                      Aggiungi al piano
-                    </Text>
+                      setActiveMealType(type);
+                      setSelectionModalVisible(true);
+                    }}>
+                    <Ionicons name="add-circle" size={24} color="#3b82f6" />
                   </TouchableOpacity>
+                </View>
+
+                {meals.length > 0 ? (
+                  meals.map((meal: any, index: number) => (
+                    <View key={meal.instanceId || index} style={styles.recipeContentMulti}>
+                      <View style={styles.iconCircle}>
+                        <Ionicons name={meal.origin === 'pantry' || meal.type === 'pantry' ? "basket" : "restaurant"} size={18} color="#3b82f6" />
+                      </View>
+                      <View style={styles.recipeInfo}>
+                        <Text style={styles.recipeTitle}>{meal.nome}</Text>
+                        <Text style={styles.recipeSub}>
+                           {meal.origin === 'recipe' || meal.type === 'recipe' ? `${meal.tempoPreparazione} min` : 'Dalla Dispensa'}
+                        </Text>
+                      </View>
+                      <TouchableOpacity onPress={() => removeFromPlan(selectedDate, type, meal.instanceId)}>
+                        <Ionicons name="close-circle-outline" size={22} color="#ef4444" />
+                      </TouchableOpacity>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.emptyText}>Nessun elemento aggiunto</Text>
                 )}
               </View>
             );
           })}
-
-          <View style={{ height: 100 }} />
+          <View style={{height: 30}} />
         </ScrollView>
+
+        {}
+        <Modal visible={selectionModalVisible} transparent animationType="slide">
+          <Pressable style={styles.modalOverlay} onPress={() => setSelectionModalVisible(false)}>
+            <View style={styles.selectionSheet}>
+              <View style={styles.sheetHandle} />
+              <Text style={styles.sheetTitle}>Aggiungi a {activeMealType}</Text>
+              
+              <TouchableOpacity 
+                style={styles.sheetOption} 
+                onPress={() => {
+                  setSelectionModalVisible(false);
+                  router.push({ pathname: '/recipes', params: { pickerMode: 'true', mealType: activeMealType } });
+                }}>
+                <Ionicons name="restaurant" size={24} color="#3b82f6" />
+                <Text style={styles.sheetOptionText}>Usa una Ricetta</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.sheetOption, { backgroundColor: '#ecfdf5' }]} 
+                onPress={() => {
+                  setSelectionModalVisible(false);
+                  router.push({ pathname: '/pantry', params: { pickerMode: 'true', mealType: activeMealType } });
+                }}>
+                <Ionicons name="basket" size={24} color="#10b981" />
+                <Text style={styles.sheetOptionText}>Dalla Dispensa</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => setSelectionModalVisible(false)} style={{ marginTop: 10 }}>
+                <Text style={{ textAlign: 'center', color: '#94a3b8', fontWeight: '600' }}>Annulla</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Modal>
+
+        {/* MODAL CALENDARIO */}
+        <Modal visible={showCalendar} animationType="fade" transparent>
+          <View style={styles.modalOverlayCalendar}>
+            <View style={styles.calendarContainer}>
+              <Calendar
+                onDayPress={(day: any) => { setSelectedDate(day.dateString); setShowCalendar(false); }}
+                markedDates={{ [selectedDate]: { selected: true, selectedColor: '#3b82f6' } }}
+              />
+              <TouchableOpacity onPress={() => setShowCalendar(false)} style={styles.closeCal}>
+                <Text style={{ color: '#3b82f6', fontWeight: 'bold' }}>CHIUDI</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </View>
     </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#f4f4f4',
-  },
-
-  container: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-
-  header: {
-    marginTop: 20,
-    marginBottom: 15,
-  },
-
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-
-  welcomeText: {
-    fontSize: 16,
-    color: '#666',
-  },
-
-  mainTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-
-  calendarToggle: {
-    backgroundColor: '#fff',
-    padding: 10,
-    borderRadius: 12,
-  },
-
-  dayList: {
-    paddingVertical: 10,
-    marginBottom: 15,
-  },
-
-  dayCard: {
-    backgroundColor: '#fff',
-    width: 60,
-    height: 75,
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-
-  activeDayCard: {
-    backgroundColor: '#3b82f6',
-  },
-
-  dayLabel: {
-    fontSize: 12,
-    color: '#888',
-    textTransform: 'capitalize',
-  },
-
-  dayNumber: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-
-  activeDayText: {
-    color: '#fff',
-  },
-
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    padding: 20,
-  },
-
-  calendarContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 15,
-  },
-
-  closeModal: {
-    marginTop: 15,
-    alignItems: 'center',
-  },
-
-  closeModalText: {
-    color: '#3b82f6',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-
-  mealList: {
-    flex: 1,
-  },
-
-  slotCard: {
-    backgroundColor: '#fff',
-    borderRadius: 15,
-    padding: 15,
-    marginBottom: 15,
-  },
-
-  slotType: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: '#3b82f6',
-    marginBottom: 12,
-    letterSpacing: 1,
-  },
-
-  recipeContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#eff6ff',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  recipeInfo: {
-    flex: 1,
-    marginLeft: 15,
-  },
-
-  recipeTitle: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-
-  recipeSub: {
-    fontSize: 12,
-    color: '#888',
-  },
-
-  addButton: {
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderStyle: 'dashed',
-    borderRadius: 10,
-    padding: 12,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  addText: {
-    marginLeft: 10,
-    color: '#888',
-    fontSize: 14,
-  },
+  safeArea: { flex: 1, backgroundColor: '#f8fafc' },
+  container: { flex: 1, paddingHorizontal: 20 },
+  header: { marginTop: 20, marginBottom: 15 },
+  headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  welcomeText: { fontSize: 14, color: '#64748b' },
+  mainTitle: { fontSize: 28, fontWeight: 'bold', color: '#1e293b' },
+  calendarToggle: { backgroundColor: '#fff', padding: 10, borderRadius: 12, elevation: 3 },
+  dayCard: { backgroundColor: '#fff', width: 60, height: 75, borderRadius: 15, justifyContent: 'center', alignItems: 'center', marginRight: 12, elevation: 2 },
+  activeDayCard: { backgroundColor: '#3b82f6' },
+  dayLabel: { fontSize: 12, color: '#94a3b8' },
+  dayNumber: { fontSize: 18, fontWeight: 'bold', color: '#1e293b' },
+  activeDayText: { color: '#fff' },
+  mealList: { flex: 1, marginTop: 10 },
+  slotCard: { backgroundColor: '#fff', borderRadius: 15, padding: 16, marginBottom: 15, elevation: 1 },
+  slotHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  slotType: { fontSize: 11, fontWeight: 'bold', color: '#3b82f6', letterSpacing: 1 },
+  recipeContentMulti: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, backgroundColor: '#f8fafc', padding: 8, borderRadius: 10 },
+  iconCircle: { width: 35, height: 35, borderRadius: 18, backgroundColor: '#eff6ff', justifyContent: 'center', alignItems: 'center' },
+  recipeInfo: { flex: 1, marginLeft: 12 },
+  recipeTitle: { fontSize: 14, fontWeight: 'bold', color: '#1e293b' },
+  recipeSub: { fontSize: 11, color: '#64748b' },
+  emptyText: { color: '#cbd5e1', fontSize: 13, fontStyle: 'italic', textAlign: 'center', paddingVertical: 5 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  modalOverlayCalendar: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' },
+  selectionSheet: { backgroundColor: '#fff', borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 25, paddingBottom: 40 },
+  sheetHandle: { width: 40, height: 5, backgroundColor: '#e2e8f0', borderRadius: 10, alignSelf: 'center', marginBottom: 20 },
+  sheetTitle: { fontSize: 20, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, color: '#1e293b' },
+  sheetOption: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f1f5f9', padding: 20, borderRadius: 18, marginBottom: 12 },
+  sheetOptionText: { marginLeft: 15, fontSize: 16, fontWeight: '700', color: '#334155' },
+  calendarContainer: { backgroundColor: '#fff', borderRadius: 20, padding: 15, width: '90%' },
+  closeCal: { marginTop: 10, alignItems: 'center', padding: 10 }
 });
-
-export default PlannerScreen;
