@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, useEffect, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
-  FlatList, Image,
+  FlatList,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -29,18 +31,18 @@ export interface Recipe {
   immagine: string;
 }
 
-const RecipesContext = createContext<{
-  recipes: Recipe[];
-  addRecipe: (r: Recipe) => void;
-  updateRecipe: (r: Recipe) => void;
-  deleteRecipe: (id: string) => void;
-} | undefined>(undefined);
-
 export default function RecipesScreen() {
+  const params = useLocalSearchParams();
+  const router = useRouter();
+
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
+
+  // Determiniamo se siamo in modalità selezione
+  const isPickerMode = params?.pickerMode === 'true';
+  const mealType = params?.mealType;
 
   const [form, setForm] = useState({
     nome: '', descrizione: '', categoria: '', tempo: '', porzioni: '', 
@@ -60,6 +62,21 @@ export default function RecipesScreen() {
   const saveToStorage = async (newList: Recipe[]) => {
     setRecipes(newList);
     await AsyncStorage.setItem('@all_recipes', JSON.stringify(newList));
+  };
+
+  const handleSelectForPlanner = (recipe: Recipe) => {
+   
+    router.push({
+      pathname: '/planner',
+      params: {
+        selectedItem: 'true',
+        mealType: mealType,
+        item: JSON.stringify(recipe),
+        origin: 'recipe'
+      }
+    });
+
+    router.setParams({ pickerMode: undefined, mealType: undefined });
   };
 
   const openForm = (recipe?: Recipe) => {
@@ -83,13 +100,8 @@ export default function RecipesScreen() {
 
   const handleSave = () => {
     const isIngValid = form.ingredienti.every(i => i.nome.trim() !== '' && i.qta.trim() !== '');
-    
-    if (
-      !form.nome.trim() || !form.descrizione.trim() || !form.categoria.trim() || 
-      !form.tempo.trim() || !form.porzioni.trim() || !form.procedimento.trim() || 
-      !form.note.trim() || !isIngValid
-    ) {
-      Alert.alert("Errore", "Tutti i campi sono obbligatori, inclusi ingredienti e note!");
+    if (!form.nome.trim() || !form.descrizione.trim() || !form.categoria.trim() || !form.tempo.trim() || !form.porzioni.trim() || !form.procedimento.trim() || !isIngValid) {
+      Alert.alert("Errore", "Tutti i campi sono obbligatori!");
       return;
     }
 
@@ -107,31 +119,36 @@ export default function RecipesScreen() {
       immagine: 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=500'
     };
 
-    let updatedList;
-    if (editingRecipe) {
-      updatedList = recipes.map(r => r.id === recipeData.id ? recipeData : r);
-    } else {
-      updatedList = [recipeData, ...recipes];
-    }
-
+    let updatedList = editingRecipe ? recipes.map(r => r.id === recipeData.id ? recipeData : r) : [recipeData, ...recipes];
     saveToStorage(updatedList);
     setModalVisible(false);
-    setEditingRecipe(null);
   };
 
   const updateIng = (index: number, field: 'nome' | 'qta', val: string) => {
     const n = [...form.ingredienti];
-    n[index][field] = val;
+    n[index] = { ...n[index], [field]: val };
     setForm({...form, ingredienti: n});
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Le Mie Ricette</Text>
-        <TouchableOpacity onPress={() => openForm()}>
-          <Ionicons name="add-circle" size={55} color="#2f95dc" />
-        </TouchableOpacity>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.headerTitle}>
+            {isPickerMode ? "Scegli per il Piano" : "Le Mie Ricette"}
+          </Text>
+          {isPickerMode && (
+            <TouchableOpacity onPress={() => router.setParams({ pickerMode: undefined, mealType: undefined })}>
+              <Text style={styles.cancelPickerText}>← Torna alla gestione (Annulla)</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {!isPickerMode && (
+          <TouchableOpacity onPress={() => openForm()}>
+            <Ionicons name="add-circle" size={55} color="#2f95dc" />
+          </TouchableOpacity>
+        )}
       </View>
 
       <FlatList 
@@ -146,60 +163,62 @@ export default function RecipesScreen() {
                   <Text style={styles.title}>{item.nome}</Text>
                   <View style={styles.badgeRow}>
                     <Text style={styles.badge}>⏱ {item.tempoPreparazione}m</Text>
-                    <Text style={styles.badge}>👥 x{item.porzioni}</Text>
                   </View>
                 </View>
-                <Text style={styles.catText}>{item.categoria} • Difficoltà: {item.difficolta}</Text>
+                <Text style={styles.catText}>{item.categoria} • {item.difficolta}</Text>
+                
+                {isPickerMode && (
+                  <TouchableOpacity 
+                    style={styles.selectBtn} 
+                    onPress={() => handleSelectForPlanner(item)}
+                  >
+                    <Ionicons name="checkmark-circle" size={18} color="#fff" />
+                    <Text style={styles.selectBtnText}> SELEZIONA PER {mealType}</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </TouchableOpacity>
 
             {selectedId === item.id && (
               <View style={styles.details}>
-                <Text style={styles.sub}>Descrizione:</Text>
-                <Text style={styles.txt}>{item.descrizione}</Text>
                 <Text style={styles.sub}>Ingredienti:</Text>
                 {item.ingredienti.map((ing, i) => <Text key={i} style={styles.txt}>• {ing.nome} ({ing.qta})</Text>)}
                 <Text style={styles.sub}>Procedimento:</Text>
                 <Text style={styles.txt}>{item.procedimento}</Text>
-                <Text style={styles.sub}>Note:</Text>
-                <Text style={[styles.txt, {fontStyle:'italic'}]}>{item.note}</Text>
                 
-                <View style={styles.actions}>
-                  <TouchableOpacity onPress={() => openForm(item)}><Ionicons name="pencil" size={24} color="#2f95dc"/></TouchableOpacity>
-                  <TouchableOpacity onPress={() => {
-                    Alert.alert("Elimina", "Vuoi cancellare questa ricetta?", [
-                      { text: "No" }, { text: "Sì", onPress: () => saveToStorage(recipes.filter(r => r.id !== item.id)) }
-                    ]);
-                  }}><Ionicons name="trash" size={24} color="red"/></TouchableOpacity>
-                </View>
+                {!isPickerMode && (
+                  <View style={styles.actions}>
+                    <TouchableOpacity onPress={() => openForm(item)}><Ionicons name="pencil" size={24} color="#2f95dc"/></TouchableOpacity>
+                    <TouchableOpacity onPress={() => {
+                      Alert.alert("Elimina", "Cancellare questa ricetta?", [
+                        { text: "No" }, { text: "Sì", onPress: () => saveToStorage(recipes.filter(r => r.id !== item.id)) }
+                      ]);
+                    }}><Ionicons name="trash" size={24} color="red"/></TouchableOpacity>
+                  </View>
+                )}
               </View>
             )}
           </View>
         )} 
       />
 
+      {/* MODAL FORM RICETTA */}
       <Modal visible={modalVisible} animationType="slide">
         <View style={styles.modalTop}>
-          <Text style={styles.modalTitle}>Dettagli Ricetta</Text>
-          <TouchableOpacity onPress={() => setModalVisible(false)}>
-            <Ionicons name="close-circle" size={35} color="#cbd5e1" />
-          </TouchableOpacity>
+          <Text style={styles.modalTitle}>{editingRecipe ? 'Modifica Ricetta' : 'Nuova Ricetta'}</Text>
+          <TouchableOpacity onPress={() => setModalVisible(false)}><Ionicons name="close-circle" size={35} color="#cbd5e1" /></TouchableOpacity>
         </View>
-
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{flex: 1}}>
           <ScrollView style={styles.modalBody}>
             <Text style={styles.label}>NOME RICETTA *</Text>
             <TextInput style={styles.input} value={form.nome} onChangeText={t => setForm({...form, nome: t})} />
-
-            <Text style={styles.label}>CATEGORIA / TIPOLOGIA *</Text>
-            <TextInput style={styles.input} placeholder="es. Dessert, Primo..." value={form.categoria} onChangeText={t => setForm({...form, categoria: t})} />
-
-            <Text style={styles.label}>DESCRIZIONE BREVE *</Text>
-            <TextInput style={styles.input} value={form.descrizione} onChangeText={t => setForm({...form, descrizione: t})} />
-
+            
+            <Text style={styles.label}>CATEGORIA *</Text>
+            <TextInput style={styles.input} value={form.categoria} onChangeText={t => setForm({...form, categoria: t})} />
+            
             <View style={styles.row}>
               <View style={{flex:1}}>
-                <Text style={styles.label}>TEMPO (MIN) *</Text>
+                <Text style={styles.label}>MINUTI *</Text>
                 <TextInput style={styles.input} keyboardType="numeric" value={form.tempo} onChangeText={t => setForm({...form, tempo: t})} />
               </View>
               <View style={{flex:1}}>
@@ -208,14 +227,8 @@ export default function RecipesScreen() {
               </View>
             </View>
 
-            <Text style={styles.label}>DIFFICOLTÀ *</Text>
-            <View style={styles.diffRow}>
-              {['Bassa', 'Media', 'Alta'].map((d) => (
-                <TouchableOpacity key={d} style={[styles.diffBtn, form.difficolta === d && styles.diffActive]} onPress={() => setForm({...form, difficolta: d as any})}>
-                  <Text style={{color: form.difficolta === d ? '#fff' : '#000'}}>{d}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            <Text style={styles.label}>DESCRIZIONE *</Text>
+            <TextInput style={styles.input} value={form.descrizione} onChangeText={t => setForm({...form, descrizione: t})} />
 
             <Text style={styles.label}>INGREDIENTI *</Text>
             {form.ingredienti.map((ing, index) => (
@@ -224,15 +237,13 @@ export default function RecipesScreen() {
                 <TextInput style={[styles.input, {flex: 1, marginBottom: 5}]} placeholder="Qta" value={ing.qta} onChangeText={t => updateIng(index, 'qta', t)} />
               </View>
             ))}
-            <TouchableOpacity onPress={() => setForm({...form, ingredienti: [...form.ingredienti, {nome:'', qta:''}]})}>
-              <Text style={styles.addBtn}>+ AGGIUNGI INGREDIENTE</Text>
-            </TouchableOpacity>
-
+            <TouchableOpacity onPress={() => setForm({...form, ingredienti: [...form.ingredienti, {nome:'', qta:''}]})}><Text style={styles.addBtn}>+ AGGIUNGI INGREDIENTE</Text></TouchableOpacity>
+            
             <Text style={styles.label}>PROCEDIMENTO *</Text>
-            <TextInput style={[styles.input, {height: 120}]} multiline value={form.procedimento} onChangeText={t => setForm({...form, procedimento: t})} />
-
-            <Text style={styles.label}>NOTE AGGIUNTIVE *</Text>
-            <TextInput style={styles.input} placeholder="es. Consigli segreti..." value={form.note} onChangeText={t => setForm({...form, note: t})} />
+            <TextInput style={[styles.input, {height: 100}]} multiline value={form.procedimento} onChangeText={t => setForm({...form, procedimento: t})} />
+            
+            <Text style={styles.label}>NOTE</Text>
+            <TextInput style={styles.input} value={form.note} onChangeText={t => setForm({...form, note: t})} />
 
             <TouchableOpacity onPress={handleSave} style={styles.btnSave}>
               <Text style={styles.btnSaveText}>SALVA RICETTA</Text>
@@ -248,7 +259,8 @@ export default function RecipesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f1f5f9', paddingHorizontal: 15 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 60, marginBottom: 20 },
-  headerTitle: { fontSize: 32, fontWeight: '800', color: '#1e293b' },
+  headerTitle: { fontSize: 28, fontWeight: '800', color: '#1e293b' },
+  cancelPickerText: { fontSize: 13, color: '#ef4444', fontWeight: 'bold', marginTop: 5 },
   card: { backgroundColor: '#fff', borderRadius: 20, marginBottom: 15, overflow: 'hidden', elevation: 3 },
   cardImg: { width: '100%', height: 160 },
   cardContent: { padding: 15 },
@@ -257,20 +269,18 @@ const styles = StyleSheet.create({
   badgeRow: { flexDirection: 'row', gap: 5 },
   badge: { backgroundColor: '#f1f5f9', padding: 5, borderRadius: 6, fontSize: 12, fontWeight: 'bold' },
   catText: { color: '#64748b', fontSize: 13, marginTop: 4 },
+  selectBtn: { backgroundColor: '#10b981', padding: 12, borderRadius: 12, marginTop: 15, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' },
+  selectBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   details: { padding: 15, borderTopWidth: 1, borderColor: '#f1f5f9' },
   sub: { fontWeight: 'bold', color: '#475569', marginTop: 10, fontSize: 14 },
   txt: { color: '#334155', fontSize: 14, lineHeight: 20 },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 20, marginTop: 15 },
-  
   modalTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderColor: '#eee' },
   modalTitle: { fontSize: 20, fontWeight: 'bold' },
   modalBody: { padding: 20 },
   label: { fontSize: 10, fontWeight: 'bold', color: '#94a3b8', marginTop: 15, marginBottom: 5 },
   input: { backgroundColor: '#f8fafc', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#e2e8f0', fontSize: 15 },
   row: { flexDirection: 'row', gap: 10 },
-  diffRow: { flexDirection: 'row', gap: 10 },
-  diffBtn: { flex: 1, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#e2e8f0', alignItems: 'center' },
-  diffActive: { backgroundColor: '#2f95dc', borderColor: '#2f95dc' },
   ingRow: { flexDirection: 'row', gap: 5 },
   addBtn: { color: '#2f95dc', fontWeight: 'bold', marginTop: 10 },
   btnSave: { backgroundColor: '#2f95dc', padding: 20, borderRadius: 15, alignItems: 'center', marginTop: 30 },
