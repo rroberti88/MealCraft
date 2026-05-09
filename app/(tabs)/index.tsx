@@ -8,21 +8,18 @@ const screenWidth = Dimensions.get("window").width;
 export default function DashboardScreen() {
   const { recipes, pantry, plan } = useAppContext();
 
- 
   const numRecipes = useMemo(() => (Array.isArray(recipes) ? recipes.length : 0), [recipes]);
   
   const totalPlannedMeals = useMemo(() => {
     if (!plan) return 0;
     return Object.values(plan).reduce((acc, day: any) => {
       if (!day) return acc;
-    
       const count = Object.values(day).reduce((subAcc: number, mealArray: any) => {
         return subAcc + (Array.isArray(mealArray) ? mealArray.length : 0);
       }, 0);
       return acc + count;
     }, 0);
   }, [plan]);
-
 
   const inScadenza = useMemo(() => {
     if (!Array.isArray(pantry)) return [];
@@ -43,7 +40,6 @@ export default function DashboardScreen() {
     recipes.forEach(r => {
       if (r.categoria) counts[r.categoria] = (counts[r.categoria] || 0) + 1;
     });
-
     const colors = ['#2f95dc', '#4caf50', '#fb8c00', '#e91e63', '#9c27b0'];
     return Object.keys(counts).map((cat, index) => ({
       name: cat,
@@ -54,7 +50,6 @@ export default function DashboardScreen() {
     }));
   }, [recipes, numRecipes]);
 
-  
   const topIng = useMemo(() => {
     if (numRecipes === 0) return [];
     const counts: Record<string, number> = {};

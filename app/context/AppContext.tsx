@@ -37,6 +37,7 @@ interface AppContextType {
   plan: Record<string, any>;
   setPantry: React.Dispatch<React.SetStateAction<PantryItem[]>>;
   setRecipes: React.Dispatch<React.SetStateAction<Recipe[]>>;
+  setShoppingList: React.Dispatch<React.SetStateAction<ShoppingItem[]>>;
   addToPantry: (item: PantryItem) => void;
   addRecipe: (recipe: Recipe) => void;
   updateRecipe: (recipe: Recipe) => void;
@@ -53,48 +54,78 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([]);
   const [plan, setPlan] = useState<Record<string, any>>({});
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const savedPantry = await AsyncStorage.getItem('@pantry');
-        const savedRecipes = await AsyncStorage.getItem('@all_recipes'); 
-        const savedShopping = await AsyncStorage.getItem('@shopping');
-        const savedPlan = await AsyncStorage.getItem('@plan');
-        
-        if (savedPantry) setPantry(JSON.parse(savedPantry));
-        if (savedRecipes) setRecipes(JSON.parse(savedRecipes));
-        if (savedShopping) setShoppingList(JSON.parse(savedShopping));
-        if (savedPlan) setPlan(JSON.parse(savedPlan));
+        const [sPantry, sRecipes, sShopping, sPlan] = await Promise.all([
+          AsyncStorage.getItem('@pantry'),
+          AsyncStorage.getItem('@all_recipes'),
+          AsyncStorage.getItem('@shopping'),
+          AsyncStorage.getItem('@plan')
+        ]);
+
+        if (sPantry) setPantry(JSON.parse(sPantry));
+        if (sRecipes) setRecipes(JSON.parse(sRecipes));
+        if (sShopping) setShoppingList(JSON.parse(sShopping));
+        if (sPlan) setPlan(JSON.parse(sPlan));
       } catch (e) {
-        console.error("Errore caricamento:", e);
+        console.error(e);
+      } finally {
+        setIsLoaded(true);
       }
     };
     loadData();
   }, []);
 
   useEffect(() => {
-    AsyncStorage.setItem('@pantry', JSON.stringify(pantry));
-  }, [pantry]);
+    if (isLoaded) {
+      const saveData = async () => {
+        try {
+          await Promise.all([
+            AsyncStorage.setItem('@pantry', JSON.stringify(pantry)),
+            AsyncStorage.setItem('@all_recipes', JSON.stringify(recipes)),
+            AsyncStorage.setItem('@shopping', JSON.stringify(shoppingList)),
+            AsyncStorage.setItem('@plan', JSON.stringify(plan))
+          ]);
+        } catch (e) {
+          console.error(e);
+        }
+      };
+      saveData();
+    }
+  }, [pantry, recipes, shoppingList, plan, isLoaded]);
 
-  useEffect(() => {
-    AsyncStorage.setItem('@all_recipes', JSON.stringify(recipes));
-  }, [recipes]);
+  const addRecipe = (newRecipe: Recipe) => {
+    setRecipes(prev => [{ ...newRecipe, id: String(newRecipe.id) }, ...prev]);
+  };
 
-  useEffect(() => {
-    AsyncStorage.setItem('@shopping', JSON.stringify(shoppingList));
-  }, [shoppingList]);
+  const updateRecipe = (updatedRecipe: Recipe) => {
+    setRecipes(prev => prev.map(r => String(r.id) === String(updatedRecipe.id) ? updatedRecipe : r));
+  };
 
-  useEffect(() => {
-    AsyncStorage.setItem('@plan', JSON.stringify(plan));
-  }, [plan]);
+  const deleteRecipe = (id: string) => {
+    setRecipes(prev => prev.filter(r => String(r.id) !== String(id)));
+  };
 
-  const addToShoppingList = async (itemNames: string[]) => {
+  const addToPantry = (newItem: PantryItem) => {
+    setPantry(prev => {
+      const existing = prev.find(i => i.nome.toLowerCase() === newItem.nome.toLowerCase());
+      if (existing) {
+        return prev.map(i => i.nome.toLowerCase() === newItem.nome.toLowerCase()
+          ? { ...i, quantita: i.quantita + newItem.quantita } : i);
+      }
+      return [...prev, newItem];
+    });
+  };
+
+  const addToShoppingList = (itemNames: string[]) => {
     const newItems = itemNames.map(nome => ({ id: Math.random().toString(), nome, preso: false }));
     setShoppingList(prev => [...prev, ...newItems]);
   };
 
-  const updatePlan = async (date: string, mealType: string, item: any) => {
+  const updatePlan = (date: string, mealType: string, item: any) => {
     const newItem = {
       ...item,
       instanceId: Date.now().toString() + Math.random().toString(36).substr(2, 9)
@@ -108,10 +139,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const removeFromPlan = async (date: string, mealType: string, instanceId: string) => {
+  const removeFromPlan = (date: string, mealType: string, instanceId: string) => {
     setPlan(prev => {
       const newPlan = { ...prev };
-      if (newPlan[date] && newPlan[date][mealType]) {
+      if (newPlan[date]?.[mealType]) {
         const updated = newPlan[date][mealType].filter((i: any) => i.instanceId !== instanceId);
         if (updated.length === 0) delete newPlan[date][mealType];
         else newPlan[date][mealType] = updated;
@@ -120,34 +151,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const addRecipe = async (newRecipe: Recipe) => {
-    setRecipes(prev => [newRecipe, ...prev]);
-  };
-
-  const updateRecipe = async (updatedRecipe: Recipe) => {
-    setRecipes(prev => prev.map(r => r.id === updatedRecipe.id ? updatedRecipe : r));
-  };
-
-  const deleteRecipe = async (id: string) => {
-    setRecipes(prev => prev.filter(r => r.id !== id));
-  };
-
-  const addToPantry = async (newItem: PantryItem) => {
-    setPantry(prev => {
-      const existing = prev.find(i => i.nome.toLowerCase() === newItem.nome.toLowerCase());
-      if (existing) {
-        return prev.map(i => i.nome.toLowerCase() === newItem.nome.toLowerCase() 
-          ? { ...i, quantita: i.quantita + newItem.quantita } : i);
-      }
-      return [...prev, newItem];
-    });
-  };
-
   return (
-    <AppContext.Provider value={{ 
-      recipes, pantry, shoppingList, plan, 
-      setPantry, setRecipes, addToPantry, addRecipe, updateRecipe, deleteRecipe,
-      addToShoppingList, updatePlan, removeFromPlan 
+    <AppContext.Provider value={{
+      recipes, pantry, shoppingList, plan,
+      setPantry, setRecipes, setShoppingList, addToPantry, addRecipe, updateRecipe, deleteRecipe,
+      addToShoppingList, updatePlan, removeFromPlan
     }}>
       {children}
     </AppContext.Provider>
