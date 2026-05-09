@@ -175,7 +175,7 @@ export default function PantryScreen() {
 
         <View style={styles.searchContainer}>
           <Ionicons name="search" size={20} color="#999" />
-          <TextInput style={styles.searchInput} placeholder="Cerca ingredienti..." value={searchQuery} onChangeText={setSearchQuery} />
+          <TextInput style={styles.searchInput} placeholder="Cerca prodotti..." value={searchQuery} onChangeText={setSearchQuery} />
         </View>
       </View>
 

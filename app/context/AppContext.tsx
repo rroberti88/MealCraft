@@ -36,13 +36,14 @@ interface AppContextType {
   shoppingList: ShoppingItem[];
   plan: Record<string, any>;
   setPantry: React.Dispatch<React.SetStateAction<PantryItem[]>>;
+  setRecipes: React.Dispatch<React.SetStateAction<Recipe[]>>;
   addToPantry: (item: PantryItem) => void;
   addRecipe: (recipe: Recipe) => void;
   updateRecipe: (recipe: Recipe) => void;
   deleteRecipe: (id: string) => void;
   addToShoppingList: (items: string[]) => void;
   updatePlan: (date: string, mealType: string, item: any) => void;
-  removeFromPlan: (date: string, mealType: string) => void;
+  removeFromPlan: (date: string, mealType: string, instanceId: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -57,109 +58,95 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const loadData = async () => {
       try {
         const savedPantry = await AsyncStorage.getItem('@pantry');
-        const savedRecipes = await AsyncStorage.getItem('@recipes');
+        const savedRecipes = await AsyncStorage.getItem('@all_recipes'); 
         const savedShopping = await AsyncStorage.getItem('@shopping');
         const savedPlan = await AsyncStorage.getItem('@plan');
+        
         if (savedPantry) setPantry(JSON.parse(savedPantry));
         if (savedRecipes) setRecipes(JSON.parse(savedRecipes));
         if (savedShopping) setShoppingList(JSON.parse(savedShopping));
         if (savedPlan) setPlan(JSON.parse(savedPlan));
       } catch (e) {
-        console.error(e);
+        console.error("Errore caricamento:", e);
       }
     };
     loadData();
   }, []);
 
+  useEffect(() => {
+    AsyncStorage.setItem('@pantry', JSON.stringify(pantry));
+  }, [pantry]);
+
+  useEffect(() => {
+    AsyncStorage.setItem('@all_recipes', JSON.stringify(recipes));
+  }, [recipes]);
+
+  useEffect(() => {
+    AsyncStorage.setItem('@shopping', JSON.stringify(shoppingList));
+  }, [shoppingList]);
+
+  useEffect(() => {
+    AsyncStorage.setItem('@plan', JSON.stringify(plan));
+  }, [plan]);
+
   const addToShoppingList = async (itemNames: string[]) => {
     const newItems = itemNames.map(nome => ({ id: Math.random().toString(), nome, preso: false }));
-    const updated = [...shoppingList, ...newItems];
-    setShoppingList(updated);
-    await AsyncStorage.setItem('@shopping', JSON.stringify(updated));
+    setShoppingList(prev => [...prev, ...newItems]);
   };
 
   const updatePlan = async (date: string, mealType: string, item: any) => {
-    const newPlan = { ...plan };
-  
-   
-    if (!newPlan[date]) {
-      newPlan[date] = {};
-    }
-  
-    if (!Array.isArray(newPlan[date][mealType])) {
-      newPlan[date][mealType] = [];
-    }
-  
     const newItem = {
       ...item,
       instanceId: Date.now().toString() + Math.random().toString(36).substr(2, 9)
     };
-  
-    newPlan[date][mealType] = [...newPlan[date][mealType], newItem];
-  
-    setPlan(newPlan);
-    await AsyncStorage.setItem('@plan', JSON.stringify(newPlan));
+    setPlan(prev => {
+      const newPlan = { ...prev };
+      if (!newPlan[date]) newPlan[date] = {};
+      if (!Array.isArray(newPlan[date][mealType])) newPlan[date][mealType] = [];
+      newPlan[date][mealType] = [...newPlan[date][mealType], newItem];
+      return newPlan;
+    });
   };
 
   const removeFromPlan = async (date: string, mealType: string, instanceId: string) => {
-   
-    const newPlan = { ...plan };
-  
-   
-    if (newPlan[date] && newPlan[date][mealType]) {
-     
-      const updatedMealArray = newPlan[date][mealType].filter(
-        (item: any) => item.instanceId !== instanceId
-      );
-  
-     
-      if (updatedMealArray.length === 0) {
-        delete newPlan[date][mealType];
-      } else {
-        newPlan[date][mealType] = updatedMealArray;
+    setPlan(prev => {
+      const newPlan = { ...prev };
+      if (newPlan[date] && newPlan[date][mealType]) {
+        const updated = newPlan[date][mealType].filter((i: any) => i.instanceId !== instanceId);
+        if (updated.length === 0) delete newPlan[date][mealType];
+        else newPlan[date][mealType] = updated;
       }
-  
-    
-      setPlan(newPlan);
-      await AsyncStorage.setItem('@plan', JSON.stringify(newPlan));
-    }
+      return newPlan;
+    });
   };
 
   const addRecipe = async (newRecipe: Recipe) => {
-    const updated = [newRecipe, ...recipes];
-    setRecipes(updated);
-    await AsyncStorage.setItem('@recipes', JSON.stringify(updated));
+    setRecipes(prev => [newRecipe, ...prev]);
   };
 
   const updateRecipe = async (updatedRecipe: Recipe) => {
-    const updated = recipes.map(r => r.id === updatedRecipe.id ? updatedRecipe : r);
-    setRecipes(updated);
-    await AsyncStorage.setItem('@recipes', JSON.stringify(updated));
+    setRecipes(prev => prev.map(r => r.id === updatedRecipe.id ? updatedRecipe : r));
   };
 
   const deleteRecipe = async (id: string) => {
-    const updated = recipes.filter(r => r.id !== id);
-    setRecipes(updated);
-    await AsyncStorage.setItem('@recipes', JSON.stringify(updated));
+    setRecipes(prev => prev.filter(r => r.id !== id));
   };
 
   const addToPantry = async (newItem: PantryItem) => {
-    const existing = pantry.find(i => i.nome.toLowerCase() === newItem.nome.toLowerCase());
-    let newPantry;
-    if (existing) {
-      newPantry = pantry.map(i => i.nome.toLowerCase() === newItem.nome.toLowerCase() 
-        ? { ...i, quantita: i.quantita + newItem.quantita } : i);
-    } else {
-      newPantry = [...pantry, newItem];
-    }
-    setPantry(newPantry);
-    await AsyncStorage.setItem('@pantry', JSON.stringify(newPantry));
+    setPantry(prev => {
+      const existing = prev.find(i => i.nome.toLowerCase() === newItem.nome.toLowerCase());
+      if (existing) {
+        return prev.map(i => i.nome.toLowerCase() === newItem.nome.toLowerCase() 
+          ? { ...i, quantita: i.quantita + newItem.quantita } : i);
+      }
+      return [...prev, newItem];
+    });
   };
 
   return (
     <AppContext.Provider value={{ 
       recipes, pantry, shoppingList, plan, 
-      setPantry, addToPantry, addRecipe, updateRecipe, deleteRecipe,
+      setPantry, setRecipes, addToPantry, addRecipe, updateRecipe, deleteRecipe,
       addToShoppingList, updatePlan, removeFromPlan 
     }}>
       {children}
