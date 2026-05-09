@@ -105,10 +105,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setRecipes(prev => prev.map(r => String(r.id) === String(updatedRecipe.id) ? updatedRecipe : r));
   };
 
-  const deleteRecipe = (id: string) => {
-    setRecipes(prev => prev.filter(r => String(r.id) !== String(id)));
-  };
-
+ 
+const deleteRecipe = (id: string) => {
+ 
+  const stringId = String(id);
+  setRecipes(prev => {
+    const newRecipes = prev.filter(r => String(r.id) !== stringId);
+    console.log("Ricette rimanenti:", newRecipes.length); 
+    return newRecipes;
+  });
+};
   const addToPantry = (newItem: PantryItem) => {
     setPantry(prev => {
       const existing = prev.find(i => i.nome.toLowerCase() === newItem.nome.toLowerCase());

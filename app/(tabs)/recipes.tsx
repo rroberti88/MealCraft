@@ -1,8 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
-  Alert,
   FlatList,
   Image,
   KeyboardAvoidingView,
@@ -21,14 +20,25 @@ import { useAppContext } from '../context/AppContext';
 export default function RecipesScreen() {
   const params = useLocalSearchParams();
   const router = useRouter();
+  const navigation = useNavigation();
   const { recipes, addRecipe, updateRecipe, deleteRecipe } = useAppContext();
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<any>(null);
 
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [recipeToDelete, setRecipeToDelete] = useState<string | null>(null);
+
   const isPickerMode = params?.pickerMode === 'true';
   const mealType = params?.mealType;
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('blur', () => {
+      router.setParams({ pickerMode: undefined, mealType: undefined });
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const [form, setForm] = useState({
     nome: '', descrizione: '', categoria: '', tempo: '', porzioni: '', 
@@ -47,6 +57,7 @@ export default function RecipesScreen() {
         origin: 'recipe'
       }
     });
+    router.setParams({ pickerMode: undefined, mealType: undefined });
   };
 
   const openForm = (recipe?: any) => {
@@ -54,9 +65,12 @@ export default function RecipesScreen() {
       setEditingRecipe(recipe);
       setForm({
         nome: recipe.nome, descrizione: recipe.descrizione, categoria: recipe.categoria,
-        tempo: recipe.tempoPreparazione.toString(), difficolta: recipe.difficolta,
-        porzioni: recipe.porzioni.toString(), procedimento: recipe.procedimento, note: recipe.note || '',
-        ingredienti: [...recipe.ingredienti]
+        tempo: (recipe.tempoPreparazione || '').toString(), 
+        difficolta: recipe.difficolta || 'Media',
+        porzioni: (recipe.porzioni || '').toString(), 
+        procedimento: recipe.procedimento, 
+        note: recipe.note || '',
+        ingredienti: recipe.ingredienti ? [...recipe.ingredienti] : [{ nome: '', qta: '' }]
       });
     } else {
       setEditingRecipe(null);
@@ -70,12 +84,11 @@ export default function RecipesScreen() {
 
   const handleSave = () => {
     if (!form.nome.trim() || !form.procedimento.trim()) {
-      Alert.alert("Errore", "Nome e procedimento sono obbligatori.");
-      return;
+      return; 
     }
 
     const recipeData = {
-      id: editingRecipe ? String(editingRecipe.id) : Date.now().toString(),
+      id: editingRecipe ? editingRecipe.id : Date.now().toString(),
       nome: form.nome,
       descrizione: form.descrizione,
       categoria: form.categoria,
@@ -93,22 +106,19 @@ export default function RecipesScreen() {
     setModalVisible(false);
   };
 
-  const confirmDelete = (id: string) => {
-    Alert.alert(
-      "Elimina Ricetta",
-      "Sei sicuro di voler eliminare questa ricetta?",
-      [
-        { text: "Annulla", style: "cancel" },
-        { 
-          text: "Elimina", 
-          style: "destructive", 
-          onPress: () => {
-            deleteRecipe(String(id));
-            setSelectedId(null);
-          }
-        }
-      ]
-    );
+ 
+  const openDeleteConfirm = (id: any) => {
+    setRecipeToDelete(id);
+    setDeleteModalVisible(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (recipeToDelete) {
+      deleteRecipe(recipeToDelete);
+      setSelectedId(null);
+      setDeleteModalVisible(false);
+      setRecipeToDelete(null);
+    }
   };
 
   const updateIng = (index: number, field: 'nome' | 'qta', val: string) => {
@@ -120,7 +130,15 @@ export default function RecipesScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>{isPickerMode ? "Scegli Ricetta" : "Le Mie Ricette"}</Text>
+        <View>
+          <Text style={styles.headerTitle}>{isPickerMode ? "Scegli Ricetta" : "Le Mie Ricette"}</Text>
+          {isPickerMode && (
+             <TouchableOpacity onPress={() => router.setParams({ pickerMode: undefined, mealType: undefined })}>
+                <Text style={{color: '#ef4444', fontWeight: 'bold'}}>Annulla selezione</Text>
+             </TouchableOpacity>
+          )}
+        </View>
+
         {!isPickerMode && (
           <TouchableOpacity onPress={() => openForm()}>
             <Ionicons name="add-circle" size={55} color="#2f95dc" />
@@ -130,13 +148,12 @@ export default function RecipesScreen() {
 
       <FlatList 
         data={recipes} 
-        extraData={recipes}
-        keyExtractor={(item) => String(item.id)} 
+        keyExtractor={(item) => item.id.toString()} 
         renderItem={({ item }) => (
           <View style={styles.card}>
             <TouchableOpacity 
               activeOpacity={0.7}
-              onPress={() => setSelectedId(selectedId === item.id ? null : item.id)}
+              onPress={() => setSelectedId(selectedId === item.id.toString() ? null : item.id.toString())}
             >
               <Image source={{ uri: item.immagine }} style={styles.cardImg} />
               <View style={styles.cardContent}>
@@ -145,18 +162,22 @@ export default function RecipesScreen() {
                   <Text style={styles.badge}>⏱ {item.tempoPreparazione}m</Text>
                 </View>
                 <Text style={styles.catText}>{item.categoria} • {item.difficolta}</Text>
+                
                 {isPickerMode && (
-                  <TouchableOpacity style={styles.selectBtn} onPress={() => handleSelectForPlanner(item)}>
-                    <Text style={styles.selectBtnText}>SELEZIONA PER {mealType}</Text>
+                  <TouchableOpacity 
+                    style={styles.selectBtn} 
+                    onPress={() => handleSelectForPlanner(item)}
+                  >
+                    <Text style={styles.selectBtnText}>SELEZIONA PER {String(mealType).toUpperCase()}</Text>
                   </TouchableOpacity>
                 )}
               </View>
             </TouchableOpacity>
 
-            {selectedId === item.id && (
+            {selectedId === item.id.toString() && (
               <View style={styles.details}>
                 <Text style={styles.sub}>Ingredienti:</Text>
-                {item.ingredienti.map((ing, i) => (
+                {item.ingredienti?.map((ing: any, i: number) => (
                   <Text key={i} style={styles.txt}>• {ing.nome} ({ing.qta})</Text>
                 ))}
                 <Text style={styles.sub}>Procedimento:</Text>
@@ -170,7 +191,7 @@ export default function RecipesScreen() {
                       <Ionicons name="pencil" size={26} color="#2f95dc"/>
                     </Pressable>
                     <Pressable 
-                      onPress={() => confirmDelete(item.id)}
+                      onPress={() => openDeleteConfirm(item.id)}
                       style={({ pressed }) => [styles.actionButton, { opacity: pressed ? 0.6 : 1 }]}
                     >
                       <Ionicons name="trash" size={26} color="red"/>
@@ -183,10 +204,13 @@ export default function RecipesScreen() {
         )} 
       />
 
+      {/* MODAL NUOVA/MODIFICA RICETTA */}
       <Modal visible={modalVisible} animationType="slide">
         <View style={styles.modalTop}>
           <Text style={styles.modalTitle}>{editingRecipe ? 'Modifica' : 'Nuova'}</Text>
-          <TouchableOpacity onPress={() => setModalVisible(false)}><Ionicons name="close-circle" size={35} color="#cbd5e1" /></TouchableOpacity>
+          <TouchableOpacity onPress={() => setModalVisible(false)}>
+            <Ionicons name="close-circle" size={35} color="#cbd5e1" />
+          </TouchableOpacity>
         </View>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{flex: 1}}>
           <ScrollView style={styles.modalBody}>
@@ -195,8 +219,14 @@ export default function RecipesScreen() {
             <Text style={styles.label}>CATEGORIA *</Text>
             <TextInput style={styles.input} value={form.categoria} onChangeText={t => setForm({...form, categoria: t})} />
             <View style={styles.row}>
-              <View style={{flex:1}}><Text style={styles.label}>MINUTI *</Text><TextInput style={styles.input} keyboardType="numeric" value={form.tempo} onChangeText={t => setForm({...form, tempo: t})} /></View>
-              <View style={{flex:1}}><Text style={styles.label}>PORZIONI *</Text><TextInput style={styles.input} keyboardType="numeric" value={form.porzioni} onChangeText={t => setForm({...form, porzioni: t})} /></View>
+              <View style={{flex:1}}>
+                <Text style={styles.label}>MINUTI *</Text>
+                <TextInput style={styles.input} keyboardType="numeric" value={form.tempo} onChangeText={t => setForm({...form, tempo: t})} />
+              </View>
+              <View style={{flex:1}}>
+                <Text style={styles.label}>PORZIONI *</Text>
+                <TextInput style={styles.input} keyboardType="numeric" value={form.porzioni} onChangeText={t => setForm({...form, porzioni: t})} />
+              </View>
             </View>
             <Text style={styles.label}>INGREDIENTI</Text>
             {form.ingredienti.map((ing, index) => (
@@ -205,14 +235,51 @@ export default function RecipesScreen() {
                 <TextInput style={[styles.input, {flex: 1}]} placeholder="Qta" value={ing.qta} onChangeText={t => updateIng(index, 'qta', t)} />
               </View>
             ))}
-            <TouchableOpacity onPress={() => setForm({...form, ingredienti: [...form.ingredienti, {nome:'', qta:''}]})}><Text style={styles.addBtn}>+ AGGIUNGI INGREDIENTE</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => setForm({...form, ingredienti: [...form.ingredienti, {nome:'', qta:''}]})}>
+              <Text style={styles.addBtn}>+ AGGIUNGI INGREDIENTE</Text>
+            </TouchableOpacity>
             <Text style={styles.label}>PROCEDIMENTO *</Text>
             <TextInput style={[styles.input, {height: 100}]} multiline value={form.procedimento} onChangeText={t => setForm({...form, procedimento: t})} />
-            <TouchableOpacity onPress={handleSave} style={styles.btnSave}><Text style={styles.btnSaveText}>SALVA</Text></TouchableOpacity>
+            <TouchableOpacity onPress={handleSave} style={styles.btnSave}>
+              <Text style={styles.btnSaveText}>SALVA</Text>
+            </TouchableOpacity>
             <View style={{height: 40}} />
           </ScrollView>
         </KeyboardAvoidingView>
       </Modal>
+
+      {}
+      <Modal
+        transparent={true}
+        visible={deleteModalVisible}
+        animationType="fade"
+        onRequestClose={() => setDeleteModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.confirmBox}>
+            <Ionicons name="warning" size={50} color="#ef4444" />
+            <Text style={styles.confirmTitle}>Sei sicuro?</Text>
+            <Text style={styles.confirmSub}>Vuoi eliminare questa ricetta? L'azione è irreversibile.</Text>
+            
+            <View style={styles.confirmButtons}>
+              <TouchableOpacity 
+                style={[styles.confirmBtn, styles.cancelBtn]} 
+                onPress={() => setDeleteModalVisible(false)}
+              >
+                <Text style={styles.cancelBtnText}>Annulla</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.confirmBtn, styles.deleteBtn]} 
+                onPress={handleConfirmDelete}
+              >
+                <Text style={styles.deleteBtnText}>Elimina</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }
@@ -244,5 +311,64 @@ const styles = StyleSheet.create({
   ingRow: { flexDirection: 'row', gap: 5, marginBottom: 5 },
   addBtn: { color: '#2f95dc', fontWeight: 'bold', marginBottom: 15 },
   btnSave: { backgroundColor: '#2f95dc', padding: 20, borderRadius: 15, alignItems: 'center', marginTop: 25 },
-  btnSaveText: { color: '#fff', fontWeight: 'bold', fontSize: 16 }
+  btnSaveText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+
+  
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20
+  },
+  confirmBox: {
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 25,
+    padding: 25,
+    alignItems: 'center',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10
+  },
+  confirmTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 15,
+    color: '#1e293b'
+  },
+  confirmSub: {
+    fontSize: 14,
+    color: '#64748b',
+    textAlign: 'center',
+    marginTop: 5,
+    marginBottom: 25
+  },
+  confirmButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%'
+  },
+  confirmBtn: {
+    flex: 1,
+    paddingVertical: 15,
+    borderRadius: 12,
+    alignItems: 'center'
+  },
+  cancelBtn: {
+    backgroundColor: '#f1f5f9'
+  },
+  deleteBtn: {
+    backgroundColor: '#ef4444'
+  },
+  cancelBtnText: {
+    color: '#64748b',
+    fontWeight: '600'
+  },
+  deleteBtnText: {
+    color: '#fff',
+    fontWeight: 'bold'
+  }
 });
