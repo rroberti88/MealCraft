@@ -33,7 +33,6 @@ export default function PlannerScreen() {
         try {
           const parsedItem = JSON.parse(params.item as string);
           
-         
           updatePlan(selectedDate, params.mealType as string, { 
             ...parsedItem, 
             origin: params.origin,
@@ -102,7 +101,6 @@ export default function PlannerScreen() {
 
         <ScrollView showsVerticalScrollIndicator={false} style={styles.mealList}>
           {mealTypes.map((type) => {
-           
             const meals = Array.isArray(plan[selectedDate]?.[type]) 
               ? plan[selectedDate][type] 
               : (plan[selectedDate]?.[type] ? [plan[selectedDate][type]] : []);
@@ -111,7 +109,6 @@ export default function PlannerScreen() {
               <View key={type} style={styles.slotCard}>
                 <View style={styles.slotHeader}>
                   <Text style={styles.slotType}>{type}</Text>
-                  {}
                   <TouchableOpacity 
                     onPress={() => {
                       setActiveMealType(type);
@@ -130,7 +127,7 @@ export default function PlannerScreen() {
                       <View style={styles.recipeInfo}>
                         <Text style={styles.recipeTitle}>{meal.nome}</Text>
                         <Text style={styles.recipeSub}>
-                           {meal.origin === 'recipe' || meal.type === 'recipe' ? `${meal.tempoPreparazione} min` : 'Dalla Dispensa'}
+                            {meal.origin === 'recipe' || meal.type === 'recipe' ? `${meal.tempoPreparazione} min` : 'Dalla Dispensa'}
                         </Text>
                       </View>
                       <TouchableOpacity onPress={() => removeFromPlan(selectedDate, type, meal.instanceId)}>
@@ -147,7 +144,6 @@ export default function PlannerScreen() {
           <View style={{height: 30}} />
         </ScrollView>
 
-        {}
         <Modal visible={selectionModalVisible} transparent animationType="slide">
           <Pressable style={styles.modalOverlay} onPress={() => setSelectionModalVisible(false)}>
             <View style={styles.selectionSheet}>
@@ -181,7 +177,6 @@ export default function PlannerScreen() {
           </Pressable>
         </Modal>
 
-        {/* MODAL CALENDARIO */}
         <Modal visible={showCalendar} animationType="fade" transparent>
           <View style={styles.modalOverlayCalendar}>
             <View style={styles.calendarContainer}>
