@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   SafeAreaView,
   ScrollView,
@@ -16,161 +17,190 @@ import {
 } from 'react-native';
 import { useAppContext } from '../context/AppContext';
 
-const CATEGORIES = ['Bibite', 'Carboidrati', 'Frutta e Verdura', 'Proteine', 'Dolci', 'Snack', 'Altro'];
+const CATEGORIES = ['Bibite', 'Carboidrati', 'Proteine', 'Snack&Dolci', 'Frutta&Verdura', 'Altro'];
+const UNITS = ['pz', 'kg', 'g', 'l', 'ml'];
 const CATEGORY_COLORS: { [key: string]: string } = {
-  'Bibite': '#60a5fa', 'Carboidrati': '#fbbf24', 'Frutta e Verdura': '#34d399',
-  'Proteine': '#f87171', 'Dolci': '#c084fc', 'Snack': '#fb923c', 'Altro': '#94a3b8'
+  'Bibite': '#60a5fa', 
+  'Carboidrati': '#fbbf24', 
+  'Proteine': '#f87171',
+  'Snack&Dolci': '#c084fc', 
+  'Frutta&Verdura': '#34d399', 
+  'Altro': '#94a3b8'
 };
 
 export default function ShoppingScreen() {
   const { addToPantry } = useAppContext();
   const params = useLocalSearchParams();
   const navigation = useNavigation<any>();
-  
+
   const [productName, setProductName] = useState('');
   const [selectedCat, setSelectedCat] = useState('Carboidrati');
   const [quantity, setQuantity] = useState('1');
-  const [shoppingList, setShoppingList] = useState<{title: string, data: any[]}[]>([]);
+  const [unit, setUnit] = useState('pz');
+  const [weight, setWeight] = useState(''); 
+  const [shoppingList, setShoppingList] = useState<{ title: string, data: any[] }[]>([]);
+
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [editingSection, setEditingSection] = useState('');
+  const [finalQty, setFinalQty] = useState('');
+  const [finalWeight, setFinalWeight] = useState('');
+  const [expiryMode, setExpiryMode] = useState<'days' | 'date'>('days');
+  const [expValue, setExpValue] = useState(''); 
 
   useEffect(() => {
     if (params?.addItems) {
-      const itemsToAdd = Array.isArray(params.addItems) 
-        ? params.addItems 
-        : [params.addItems];
-      
+      const itemsToAdd = Array.isArray(params.addItems) ? params.addItems : [params.addItems];
       setShoppingList(prev => {
         let newList = [...prev];
         const targetCategory = 'Altro';
-        
         itemsToAdd.forEach((itemName: any) => {
           const newItem = {
             id: Math.random().toString(36).substr(2, 9),
             nome: itemName,
             qta: '1',
-            preso: false
+            unita: 'pz',
+            peso: '',
+            preso: false,
+            scadenza: ''
           };
-
-          const sectionIndex = newList.findIndex(s => s.title === targetCategory);
-          if (sectionIndex !== -1) {
-            newList[sectionIndex].data = [...newList[sectionIndex].data, newItem];
-          } else {
-            newList.push({ title: targetCategory, data: [newItem] });
-          }
+          const idx = newList.findIndex(s => s.title === targetCategory);
+          if (idx !== -1) newList[idx].data.push(newItem);
+          else newList.push({ title: targetCategory, data: [newItem] });
         });
         return newList;
       });
-
       navigation.setParams({ addItems: undefined });
-      Alert.alert("Lista Aggiornata", "Gli ingredienti mancanti sono stati aggiunti alla spesa.");
     }
   }, [params?.addItems]);
 
   const addProduct = () => {
-    if (!productName.trim()) {
-      Alert.alert("Errore", "Inserisci il nome del prodotto");
-      return;
-    }
-
+    if (!productName.trim()) return Alert.alert("Errore", "Nome mancante");
     const newItem = {
       id: Math.random().toString(36).substr(2, 9),
       nome: productName,
       qta: quantity,
-      preso: false
+      unita: unit,
+      peso: unit === 'pz' ? '' : weight,
+      preso: false,
     };
-
     setShoppingList(prev => {
-      const sectionIndex = prev.findIndex(s => s.title === selectedCat);
-      if (sectionIndex !== -1) {
-        const newSections = [...prev];
-        newSections[sectionIndex].data = [...newSections[sectionIndex].data, newItem];
-        return newSections;
-      } else {
-        return [...prev, { title: selectedCat, data: [newItem] }];
+      const idx = prev.findIndex(s => s.title === selectedCat);
+      if (idx !== -1) {
+        const copy = [...prev];
+        copy[idx].data = [...copy[idx].data, newItem];
+        return copy;
       }
+      return [...prev, { title: selectedCat, data: [newItem] }];
     });
-
-    setProductName('');
-    setQuantity('1');
+    setProductName(''); setQuantity('1'); setWeight('');
   };
 
-  const toggleCheck = (sectionTitle: string, id: string) => {
+  const openPurchaseModal = (sectionTitle: string, item: any) => {
+    if (item.preso) {
+      toggleCheck(sectionTitle, item.id, false);
+      return;
+    }
+    setEditingItem(item);
+    setEditingSection(sectionTitle);
+    setFinalQty(item.qta);
+    setFinalWeight(item.peso || '');
+    setExpValue(''); 
+    setIsModalVisible(true);
+  };
+
+  const confirmPurchase = () => {
+    let finalExpiryDate = "";
+    
+    if (expiryMode === 'days') {
+      const days = parseInt(expValue.replace(/[^0-9]/g, '') || '0');
+      const d = new Date();
+      d.setDate(d.getDate() + days);
+      finalExpiryDate = d.toISOString().split('T')[0];
+    } else {
+      const dateParts = expValue.split(/[/.-]/);
+      if (dateParts.length === 3) {
+        const day = dateParts[0].padStart(2, '0');
+        const month = dateParts[1].padStart(2, '0');
+        const year = dateParts[2].length === 2 ? `20${dateParts[2]}` : dateParts[2];
+        finalExpiryDate = `${year}-${month}-${day}`;
+      } else {
+        finalExpiryDate = new Date().toISOString().split('T')[0];
+      }
+    }
+
+    setShoppingList(prev => prev.map(section => 
+      section.title === editingSection 
+        ? { ...section, data: section.data.map(i => i.id === editingItem.id ? { ...i, preso: true, qta: finalQty, peso: finalWeight, scadenza: finalExpiryDate } : i) }
+        : section
+    ));
+    setIsModalVisible(false);
+  };
+
+  const toggleCheck = (sectionTitle: string, id: string, status: boolean) => {
     setShoppingList(prev => prev.map(section => 
       section.title === sectionTitle 
-        ? { ...section, data: section.data.map(i => i.id === id ? { ...i, preso: !i.preso } : i) }
+        ? { ...section, data: section.data.map(i => i.id === id ? { ...i, preso: status } : i) }
         : section
     ));
   };
 
   const finalizeShopping = () => {
-    const purchased: any[] = [];
+    const purchased = shoppingList.flatMap(s => s.data.filter(i => i.preso).map(i => ({
+      ...i, 
+      categoria: s.title,
+      quantita: parseFloat(i.qta),
+      unitaMisura: i.unita,
+      pesoEffettivo: i.peso,
+      scadenza: i.scadenza
+    })));
+
+    if (purchased.length === 0) return Alert.alert("Info", "Nessun prodotto selezionato");
     
-    shoppingList.forEach(section => {
-      section.data.forEach(item => {
-        if (item.preso) {
-          purchased.push({
-            id: Math.random().toString(36).substr(2, 9),
-            nome: item.nome,
-            categoria: section.title,
-            quantita: parseInt(item.qta) || 1,
-            unitaMisura: 'pz',
-            scadenza: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-          });
-        }
-      });
-    });
-  
-    if (purchased.length === 0) {
-      Alert.alert("Vuoto", "Segna i prodotti presi prima di spostarli!");
-      return;
-    }
-  
-    purchased.forEach(product => {
-      addToPantry(product);
-    });
-  
-    Alert.alert("Successo!", "I prodotti sono stati aggiunti alla tua Dispensa 🛒");
-    setShoppingList(prev => prev.map(section => ({
-      ...section,
-      data: section.data.filter(item => !item.preso)
-    })).filter(section => section.data.length > 0)); 
+    purchased.forEach(p => addToPantry(p));
+    Alert.alert("Successo!", "Prodotti aggiunti alla Dispensa");
+    setShoppingList(prev => prev.map(s => ({ ...s, data: s.data.filter(i => !i.preso) })).filter(s => s.data.length > 0));
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{flex:1}}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
         
         <View style={styles.inputCard}>
-          <Text style={styles.inputTitle}>Lista della Spesa</Text>
-          <TextInput 
-            style={styles.input} 
-            placeholder="Esempio: Pane, Latte..." 
-            value={productName}
-            onChangeText={setProductName}
-          />
+          <Text style={styles.inputTitle}>Cosa manca?</Text>
+          <TextInput style={styles.input} placeholder="Nome prodotto (es. Pasta)" value={productName} onChangeText={setProductName} />
           
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
             {CATEGORIES.map(cat => (
-              <TouchableOpacity 
-                key={cat} 
-                style={[styles.catBtn, selectedCat === cat && { backgroundColor: CATEGORY_COLORS[cat] }]}
-                onPress={() => setSelectedCat(cat)}
-              >
-                <Text style={[styles.catBtnText, selectedCat === cat && { color: '#fff' }]}>{cat}</Text>
+              <TouchableOpacity key={cat} style={[styles.chip, selectedCat === cat && { backgroundColor: CATEGORY_COLORS[cat] }]} onPress={() => setSelectedCat(cat)}>
+                <Text style={[styles.chipText, selectedCat === cat && { color: '#fff' }]}>{cat}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
 
           <View style={styles.row}>
+            <TextInput style={[styles.input, { flex: 0.8, marginBottom: 0 }]} keyboardType="numeric" placeholder="Qta" value={quantity} onChangeText={setQuantity} />
+            
             <TextInput 
-              style={[styles.input, {flex: 1, marginBottom: 0}]} 
+              style={[styles.input, { flex: 1, marginBottom: 0, opacity: unit === 'pz' ? 0.3 : 1 }]} 
               keyboardType="numeric" 
-              placeholder="Qta"
-              value={quantity}
-              onChangeText={setQuantity}
+              placeholder="Peso/Vol" 
+              value={weight} 
+              onChangeText={setWeight}
+              editable={unit !== 'pz'} 
             />
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 2 }}>
+              <View style={styles.unitContainer}>
+                {UNITS.map(u => (
+                  <TouchableOpacity key={u} style={[styles.unitBtn, unit === u && styles.unitBtnActive]} onPress={() => setUnit(u)}>
+                    <Text style={[styles.unitBtnText, unit === u && { color: '#fff' }]}>{u}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
             <TouchableOpacity style={styles.addButton} onPress={addProduct}>
               <Ionicons name="add" size={24} color="white" />
-              <Text style={styles.addButtonText}>Aggiungi</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -178,29 +208,79 @@ export default function ShoppingScreen() {
         <SectionList
           sections={shoppingList}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingBottom: 100 }}
           renderItem={({ item, section }) => (
-            <TouchableOpacity style={styles.itemRow} onPress={() => toggleCheck(section.title, item.id)}>
-              <Ionicons 
-                name={item.preso ? "checkbox" : "square-outline"} 
-                size={24} 
-                color={item.preso ? "#10b981" : "#94a3b8"} 
-              />
-              <Text style={[styles.itemName, item.preso && styles.strikethrough]}>
-                {item.nome} ({item.qta})
-              </Text>
+            <TouchableOpacity style={styles.itemRow} onPress={() => openPurchaseModal(section.title, item)}>
+              <Ionicons name={item.preso ? "checkbox" : "square-outline"} size={26} color={item.preso ? "#10b981" : "#cbd5e1"} />
+              <View>
+                <Text style={[styles.itemName, item.preso && styles.strikethrough]}>{item.nome}</Text>
+                <Text style={styles.itemDetails}>
+                  {item.qta} {item.peso ? `${item.peso} ` : ''}{item.unita}
+                </Text>
+              </View>
             </TouchableOpacity>
           )}
           renderSectionHeader={({ section: { title } }) => (
-            <View style={[styles.sectionHeader, { backgroundColor: CATEGORY_COLORS[title] + '20' }]}>
-              <Text style={[styles.sectionTitle, { color: CATEGORY_COLORS[title] }]}>{title.toUpperCase()}</Text>
-            </View>
+            <Text style={[styles.sectionTitle, { color: CATEGORY_COLORS[title] }]}>{title.toUpperCase()}</Text>
           )}
-          ListEmptyComponent={<Text style={styles.empty}>Nessun articolo da comprare.</Text>}
+          ListEmptyComponent={<Text style={styles.empty}>La lista è vuota</Text>}
+          contentContainerStyle={{ paddingBottom: 100 }}
         />
 
+        <Modal visible={isModalVisible} transparent animationType="fade">
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Conferma Acquisto</Text>
+              <Text style={styles.modalSubtitle}>{editingItem?.nome}</Text>
+
+              <TextInput 
+                style={styles.input} 
+                keyboardType="numeric" 
+                placeholder="Quantità finale" 
+                value={finalQty} 
+                onChangeText={setFinalQty} 
+              />
+              
+              {editingItem?.unita !== 'pz' && (
+                <TextInput 
+                  style={styles.input} 
+                  keyboardType="numeric" 
+                  placeholder={`Peso finale (${editingItem?.unita})`} 
+                  value={finalWeight} 
+                  onChangeText={setFinalWeight} 
+                />
+              )}
+
+              <View style={styles.expiryToggleRow}>
+                <View style={styles.toggleContainer}>
+                  <TouchableOpacity onPress={() => setExpiryMode('days')} style={[styles.toggleBtn, expiryMode === 'days' && styles.toggleBtnActive]}>
+                    <Text style={styles.toggleBtnText}>+ Giorni</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setExpiryMode('date')} style={[styles.toggleBtn, expiryMode === 'date' && styles.toggleBtnActive]}>
+                    <Text style={styles.toggleBtnText}>Data</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              
+              <TextInput 
+                style={styles.input} 
+                placeholder={expiryMode === 'days' ? "Esempio: 10" : "GG/MM/AAAA"} 
+                value={expValue} 
+                onChangeText={setExpValue} 
+              />
+
+              <View style={[styles.row, { marginTop: 10 }]}>
+                <TouchableOpacity style={[styles.modalBtn, { backgroundColor: '#f1f5f9' }]} onPress={() => setIsModalVisible(false)}>
+                  <Text style={{ color: '#64748b', fontWeight: 'bold' }}>Annulla</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.modalBtn, { backgroundColor: '#4f46e5' }]} onPress={confirmPurchase}>
+                  <Text style={{ color: '#fff', fontWeight: 'bold' }}>Conferma</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
         <TouchableOpacity style={styles.finalizeBtn} onPress={finalizeShopping}>
-          <Ionicons name="cart-outline" size={20} color="white" />
           <Text style={styles.finalizeBtnText}>Sposta in Dispensa</Text>
         </TouchableOpacity>
 
@@ -210,22 +290,34 @@ export default function ShoppingScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f1f5f9' },
-  inputCard: { backgroundColor: '#fff', padding: 20, borderBottomLeftRadius: 20, borderBottomRightRadius: 20, elevation: 5, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10 },
-  inputTitle: { fontSize: 24, fontWeight: '800', marginBottom: 15, color: '#1e293b' },
-  input: { backgroundColor: '#f8fafc', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#e2e8f0', marginBottom: 10 },
-  catScroll: { marginBottom: 15 },
-  catBtn: { paddingHorizontal: 15, paddingVertical: 8, borderRadius: 20, backgroundColor: '#f1f5f9', marginRight: 8 },
-  catBtnText: { fontSize: 13, fontWeight: '600', color: '#64748b' },
-  row: { flexDirection: 'row', gap: 10 },
-  addButton: { backgroundColor: '#4f46e5', flexDirection: 'row', paddingHorizontal: 20, borderRadius: 10, alignItems: 'center', gap: 5 },
-  addButtonText: { color: '#fff', fontWeight: 'bold' },
-  sectionHeader: { padding: 10, marginTop: 15 },
-  sectionTitle: { fontWeight: '800', fontSize: 12, letterSpacing: 1 },
-  itemRow: { flexDirection: 'row', alignItems: 'center', padding: 15, backgroundColor: '#fff', marginHorizontal: 12, marginTop: 6, borderRadius: 12, gap: 10, elevation: 1 },
-  itemName: { fontSize: 16, color: '#334155', fontWeight: '500' },
+  container: { flex: 1, backgroundColor: '#f8fafc' },
+  inputCard: { backgroundColor: '#fff', padding: 20, borderBottomLeftRadius: 30, borderBottomRightRadius: 30, elevation: 4 },
+  inputTitle: { fontSize: 20, fontWeight: '900', color: '#1e293b', marginBottom: 12 },
+  input: { backgroundColor: '#f1f5f9', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0', marginBottom: 10, fontSize: 15 },
+  row: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: '#f1f5f9', marginRight: 8 },
+  chipText: { fontSize: 12, fontWeight: 'bold', color: '#64748b' },
+  unitContainer: { flexDirection: 'row', gap: 5 },
+  unitBtn: { padding: 10, borderRadius: 10, backgroundColor: '#f1f5f9' },
+  unitBtnActive: { backgroundColor: '#1e293b' },
+  unitBtnText: { fontSize: 12, fontWeight: '700', color: '#64748b' },
+  addButton: { backgroundColor: '#4f46e5', width: 48, height: 48, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  sectionTitle: { fontSize: 11, fontWeight: '900', letterSpacing: 1.5, marginLeft: 20, marginTop: 20, marginBottom: 5 },
+  itemRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', padding: 15, marginHorizontal: 20, marginTop: 8, borderRadius: 18, gap: 12 },
+  itemName: { fontSize: 16, fontWeight: '700', color: '#334155' },
+  itemDetails: { fontSize: 12, color: '#94a3b8' },
   strikethrough: { textDecorationLine: 'line-through', color: '#cbd5e1' },
-  empty: { textAlign: 'center', marginTop: 40, color: '#94a3b8', fontSize: 16 },
-  finalizeBtn: { position: 'absolute', bottom: 25, left: 20, right: 20, backgroundColor: '#1e293b', padding: 18, borderRadius: 15, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 },
-  finalizeBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 }
+  empty: { textAlign: 'center', marginTop: 40, color: '#94a3b8' },
+  finalizeBtn: { position: 'absolute', bottom: 20, left: 20, right: 20, backgroundColor: '#0f172a', padding: 18, borderRadius: 20, alignItems: 'center' },
+  finalizeBtnText: { color: '#fff', fontWeight: '800' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 },
+  modalContent: { backgroundColor: '#fff', padding: 25, borderRadius: 25 },
+  modalTitle: { fontSize: 18, fontWeight: '900', color: '#1e293b', textAlign: 'center', marginBottom: 5 },
+  modalSubtitle: { fontSize: 16, color: '#4f46e5', textAlign: 'center', marginBottom: 20, fontWeight: '600' },
+  expiryToggleRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
+  toggleContainer: { flexDirection: 'row', backgroundColor: '#f1f5f9', padding: 3, borderRadius: 10 },
+  toggleBtn: { paddingHorizontal: 15, paddingVertical: 8, borderRadius: 8 },
+  toggleBtnActive: { backgroundColor: '#fff', elevation: 2 },
+  toggleBtnText: { fontSize: 12, fontWeight: 'bold', color: '#1e293b' },
+  modalBtn: { flex: 1, padding: 15, borderRadius: 12, alignItems: 'center' }
 });

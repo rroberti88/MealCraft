@@ -24,6 +24,7 @@ const CATEGORIES = [
   { id: 'Proteine', label: 'Proteine', icon: 'egg-outline' },
   { id: 'Snack&Dolci', label: 'Snack&Dolci', icon: 'ice-cream-outline' },
   { id: 'Frutta&Verdura', label: 'Frutta&Verdura', icon: 'leaf-outline' },
+  { id: 'Altro', label: 'Altro', icon: 'ellipsis-horizontal-outline' },
 ];
 
 type FilterStatus = 'Tutti' | 'Scadenze' | 'Esaurimento' | 'InStato';
@@ -50,7 +51,7 @@ export default function PantryScreen() {
   });
 
   const [newItem, setNewItem] = useState({
-    nome: '', categoria: '', quantita: '', unitaMisura: '', scadenza: '', note: ''
+    nome: '', categoria: '', quantita: '', unitaMisura: '', pesoEffettivo: '', scadenza: '', note: ''
   });
 
   const getDaysDiff = (dateStr: string) => {
@@ -77,7 +78,6 @@ export default function PantryScreen() {
     });
     router.setParams({ pickerMode: undefined, mealType: undefined });
   };
-  // ---------------------------------------
 
   const filteredItems = useMemo(() => {
     return pantry.filter(item => {
@@ -103,10 +103,11 @@ export default function PantryScreen() {
       ...newItem, 
       id: Date.now().toString(), 
       quantita: Number(newItem.quantita),
+
     };
     LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
     setPantry([...pantry, product]);
-    setNewItem({ nome: '', categoria: '', quantita: '', unitaMisura: '', scadenza: '', note: '' });
+    setNewItem({ nome: '', categoria: '', quantita: '', unitaMisura: '', pesoEffettivo: '', scadenza: '', note: '' });
     
     setCustomAlert({
       visible: true,
@@ -162,7 +163,6 @@ export default function PantryScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.topSection}>
-        {}
         <Text style={styles.headerTitle}>
           {isPickerMode ? `Scegli per ${mealType}` : "Dispensa Intelligente"}
         </Text>
@@ -201,7 +201,7 @@ export default function PantryScreen() {
           </TouchableOpacity>
           
           <TouchableOpacity onPress={() => setStatusFilter('InStato')} style={[styles.statusTab, statusFilter === 'InStato' && { backgroundColor: '#34C759' }]}>
-            <Text style={styles.statusTabTextActive}>Scadenza non prossima 🟢</Text>
+            <Text style={styles.statusTabTextActive}>In Buono Stato 🟢</Text>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => setStatusFilter('Scadenze')} style={[styles.statusTab, statusFilter === 'Scadenze' && { backgroundColor: '#FF9500' }]}>
@@ -227,12 +227,15 @@ export default function PantryScreen() {
             <View style={[styles.itemCard, borderStyle]}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.itemTitle}>{item.nome}</Text>
-                <Text style={styles.itemSub}>{item.categoria} • {item.quantita} {item.unitaMisura}</Text>
+               
+                <Text style={styles.itemSub}>
+                  {item.categoria} • {item.quantita} {item.unitaMisura} 
+                  {item.pesoEffettivo ? ` (${item.pesoEffettivo}${item.unitaMisura})` : ''}
+                </Text>
                 <Text style={[styles.itemExpiry, diff !== null && diff < 0 && { color: '#FF3B30', fontWeight: 'bold' }]}>
                   Scadenza: {item.scadenza} {diff !== null && diff < 0 ? '(SCADUTO)' : ''}
                 </Text>
 
-                {}
                 {isPickerMode && (
                   <TouchableOpacity style={styles.selectBtn} onPress={() => handleSelectItem(item)}>
                     <Ionicons name="add-circle" size={16} color="#fff" />
@@ -251,12 +254,12 @@ export default function PantryScreen() {
         }}
       />
 
-      {}
       <Modal visible={formVisible} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalContent}>
             <Text style={styles.modalTitle}>Nuovo Ingrediente</Text>
             <TextInput style={styles.input} placeholder="Nome prodotto *" value={newItem.nome} onChangeText={t => setNewItem({...newItem, nome: t})} />
+            
             <Text style={styles.label}>Categoria *</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 15 }}>
               {CATEGORIES.map(cat => (
@@ -265,11 +268,17 @@ export default function PantryScreen() {
                 </TouchableOpacity>
               ))}
             </ScrollView>
+
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <TextInput style={[styles.input, { flex: 1 }]} placeholder="Quantità *" keyboardType="numeric" value={newItem.quantita} onChangeText={t => setNewItem({...newItem, quantita: t})} />
-              <TextInput style={[styles.input, { flex: 1 }]} placeholder="Unità (es. kg)" value={newItem.unitaMisura} onChangeText={t => setNewItem({...newItem, unitaMisura: t})} />
+              <TextInput style={[styles.input, { flex: 1 }]} placeholder="Pezzi/Qta *" keyboardType="numeric" value={newItem.quantita} onChangeText={t => setNewItem({...newItem, quantita: t})} />
+              <TextInput style={[styles.input, { flex: 1 }]} placeholder="Unità (pz, kg...)" value={newItem.unitaMisura} onChangeText={t => setNewItem({...newItem, unitaMisura: t})} />
             </View>
+
+            
+            <TextInput style={styles.input} placeholder="Peso/Volume (opzionale)" keyboardType="numeric" value={newItem.pesoEffettivo} onChangeText={t => setNewItem({...newItem, pesoEffettivo: t})} />
+            
             <TextInput style={styles.input} placeholder="Scadenza (AAAA-MM-GG) *" value={newItem.scadenza} onChangeText={t => setNewItem({...newItem, scadenza: t})} />
+            
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
               <TouchableOpacity style={[styles.btn, { backgroundColor: '#8E8E93' }]} onPress={() => setFormVisible(false)}><Text style={styles.btnText}>Annulla</Text></TouchableOpacity>
               <TouchableOpacity style={[styles.btn, { backgroundColor: '#007AFF' }]} onPress={handleSave}><Text style={styles.btnText}>Salva</Text></TouchableOpacity>
@@ -278,7 +287,6 @@ export default function PantryScreen() {
         </View>
       </Modal>
 
-      {}
       <Modal visible={customAlert.visible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={[styles.alertContainer, { borderTopColor: customAlert.type === 'error' ? '#FF3B30' : customAlert.type === 'warning' ? '#FF9500' : '#34C759' }]}>
@@ -317,7 +325,6 @@ export default function PantryScreen() {
 }
 
 const styles = StyleSheet.create({
-  
   container: { flex: 1, backgroundColor: '#F8F9FB' },
   topSection: { padding: 20, backgroundColor: '#fff', borderBottomLeftRadius: 30, borderBottomRightRadius: 30, elevation: 5, paddingTop: 60 },
   headerTitle: { fontSize: 24, fontWeight: 'bold', marginBottom: 15 },
@@ -356,7 +363,6 @@ const styles = StyleSheet.create({
   alertContainer: { backgroundColor: '#fff', width: '85%', borderRadius: 30, padding: 25, alignItems: 'center', borderTopWidth: 8 },
   alertTitle: { fontSize: 20, fontWeight: '900', marginTop: 15, textAlign: 'center' },
   alertMessage: { fontSize: 16, color: '#444', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
- 
   selectBtn: { backgroundColor: '#007AFF', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, marginTop: 8, flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start' },
   selectBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 12 }
 });
