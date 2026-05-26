@@ -124,13 +124,11 @@ export default function PlannerScreen() {
                     
                     return (
                       <View key={meal.instanceId || index} style={styles.recipeContentMulti}>
-                        
-                        
                         <TouchableOpacity
                           style={styles.mealPressableArea}
                           disabled={!isRecipe}
                           onPress={() => {
-                            router.push({
+                            router.navigate({
                               pathname: '/recipes',
                               params: { recipeIdOpen: String(meal.id) }
                             });
@@ -153,7 +151,6 @@ export default function PlannerScreen() {
                           </View>
                         </TouchableOpacity>
 
-                        
                         <TouchableOpacity onPress={() => removeFromPlan(selectedDate, type, meal.instanceId)}>
                           <Ionicons name="close-circle-outline" size={22} color="#ef4444" />
                         </TouchableOpacity>
@@ -175,11 +172,12 @@ export default function PlannerScreen() {
               <View style={styles.sheetHandle} />
               <Text style={styles.sheetTitle}>Aggiungi a {activeMealType}</Text>
               
+             
               <TouchableOpacity 
                 style={styles.sheetOption} 
                 onPress={() => {
                   setSelectionModalVisible(false);
-                  router.push({ pathname: '/recipes', params: { pickerMode: 'true', mealType: activeMealType } });
+                  router.navigate({ pathname: '/recipes', params: { pickerMode: 'true', mealType: activeMealType } });
                 }}>
                 <Ionicons name="restaurant" size={24} color="#3b82f6" />
                 <Text style={styles.sheetOptionText}>Usa una Ricetta</Text>
@@ -189,7 +187,7 @@ export default function PlannerScreen() {
                 style={[styles.sheetOption, { backgroundColor: '#ecfdf5' }]} 
                 onPress={() => {
                   setSelectionModalVisible(false);
-                  router.push({ pathname: '/pantry', params: { pickerMode: 'true', mealType: activeMealType } });
+                  router.navigate({ pathname: '/pantry', params: { pickerMode: 'true', mealType: activeMealType } });
                 }}>
                 <Ionicons name="basket" size={24} color="#10b981" />
                 <Text style={styles.sheetOptionText}>Dalla Dispensa</Text>
