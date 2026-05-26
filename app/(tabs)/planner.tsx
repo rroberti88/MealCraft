@@ -119,22 +119,47 @@ export default function PlannerScreen() {
                 </View>
 
                 {meals.length > 0 ? (
-                  meals.map((meal: any, index: number) => (
-                    <View key={meal.instanceId || index} style={styles.recipeContentMulti}>
-                      <View style={styles.iconCircle}>
-                        <Ionicons name={meal.origin === 'pantry' || meal.type === 'pantry' ? "basket" : "restaurant"} size={18} color="#3b82f6" />
+                  meals.map((meal: any, index: number) => {
+                    const isRecipe = meal.origin === 'recipe' || meal.type === 'recipe';
+                    
+                    return (
+                      <View key={meal.instanceId || index} style={styles.recipeContentMulti}>
+                        
+                        
+                        <TouchableOpacity
+                          style={styles.mealPressableArea}
+                          disabled={!isRecipe}
+                          onPress={() => {
+                            router.push({
+                              pathname: '/recipes',
+                              params: { recipeIdOpen: String(meal.id) }
+                            });
+                          }}
+                        >
+                          <View style={styles.iconCircle}>
+                            <Ionicons 
+                              name={!isRecipe ? "basket" : "restaurant"} 
+                              size={18} 
+                              color="#3b82f6" 
+                            />
+                          </View>
+                          <View style={styles.recipeInfo}>
+                            <Text style={styles.recipeTitle}>
+                              {meal.nome} {isRecipe && <Ionicons name="chevron-forward" size={12} color="#94a3b8" />}
+                            </Text>
+                            <Text style={styles.recipeSub}>
+                              {isRecipe ? `${meal.tempoPreparazione} min • Vedi ricetta` : 'Dalla Dispensa'}
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+
+                        
+                        <TouchableOpacity onPress={() => removeFromPlan(selectedDate, type, meal.instanceId)}>
+                          <Ionicons name="close-circle-outline" size={22} color="#ef4444" />
+                        </TouchableOpacity>
                       </View>
-                      <View style={styles.recipeInfo}>
-                        <Text style={styles.recipeTitle}>{meal.nome}</Text>
-                        <Text style={styles.recipeSub}>
-                            {meal.origin === 'recipe' || meal.type === 'recipe' ? `${meal.tempoPreparazione} min` : 'Dalla Dispensa'}
-                        </Text>
-                      </View>
-                      <TouchableOpacity onPress={() => removeFromPlan(selectedDate, type, meal.instanceId)}>
-                        <Ionicons name="close-circle-outline" size={22} color="#ef4444" />
-                      </TouchableOpacity>
-                    </View>
-                  ))
+                    );
+                  })
                 ) : (
                   <Text style={styles.emptyText}>Nessun elemento aggiunto</Text>
                 )}
@@ -213,6 +238,7 @@ const styles = StyleSheet.create({
   slotHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   slotType: { fontSize: 11, fontWeight: 'bold', color: '#3b82f6', letterSpacing: 1 },
   recipeContentMulti: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, backgroundColor: '#f8fafc', padding: 8, borderRadius: 10 },
+  mealPressableArea: { flex: 1, flexDirection: 'row', alignItems: 'center' },
   iconCircle: { width: 35, height: 35, borderRadius: 18, backgroundColor: '#eff6ff', justifyContent: 'center', alignItems: 'center' },
   recipeInfo: { flex: 1, marginLeft: 12 },
   recipeTitle: { fontSize: 14, fontWeight: 'bold', color: '#1e293b' },
