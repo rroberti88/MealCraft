@@ -166,7 +166,7 @@ export default function ShoppingScreen() {
     }));
   };
 
-  // --- LOGICA CANCELLAZIONE CON MODAL ---
+  
   const triggerDeleteRequest = (section: string, item: any) => {
     setItemToDelete({ section, id: item.id, nome: item.nome });
     setIsDeleteModalVisible(true);
@@ -262,7 +262,7 @@ export default function ShoppingScreen() {
           contentContainerStyle={{ paddingBottom: 100 }}
         />
 
-        {/* MODAL CONFERMA ACQUISTO (Pantry) */}
+        {}
         <Modal visible={isModalVisible} transparent animationType="fade">
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
@@ -295,7 +295,7 @@ export default function ShoppingScreen() {
           </View>
         </Modal>
 
-        {/* --- NUOVO MODAL: CONFERMA ELIMINAZIONE --- */}
+        {}
         <Modal visible={isDeleteModalVisible} transparent animationType="slide">
           <View style={styles.modalOverlay}>
             <View style={[styles.modalContent, { borderTopWidth: 5, borderTopColor: '#f87171' }]}>
