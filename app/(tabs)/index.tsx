@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import { useAppContext } from '../context/AppContext';
 
-// Funzione helper centralizzata per evitare parsing duplicati nel filter e nel sort
 const parseScadenza = (scadenza: any): number => {
   if (!scadenza || typeof scadenza !== 'string') return new Date(scadenza).getTime();
   if (scadenza.includes('/')) {
@@ -40,7 +39,6 @@ export default function HomeScreen() {
 
   const chartColors = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899'];
 
-  // helper per estrarre i pasti in modo standardizzato
   const getMealsForDate = (dateStr: string) => {
     if (!plan[dateStr]) return [];
     const list: any[] = [];
@@ -63,16 +61,15 @@ export default function HomeScreen() {
 
   const expiringItems = useMemo(() => {
     const now = new Date();
-    // Fine del terzo giorno da oggi (23:59:59)
+   
     const limitDateEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 3, 23, 59, 59).getTime();
 
     return pantry
       .map(item => ({ ...item, time: parseScadenza(item.scadenza) }))
       .filter(item => !isNaN(item.time) && item.time <= limitDateEnd)
-      .sort((a, b) => a.time - b.time); // RIMOSSO .slice(0, 4) -> Ora tiene TUTTI gli elementi in scadenza
+      .sort((a, b) => a.time - b.time); 
   }, [pantry]);
 
-  // Generatore di date in base a viewMode
   const targetDates = useMemo(() => {
     const current = new Date();
     const dates: string[] = [];
@@ -240,8 +237,7 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" />
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        
-        {/* Header */}
+      
         <View style={styles.header}>
           <Text style={styles.welcomeText}>Riepiloghi e Statistiche</Text>
           <View style={styles.headerMainRow}>
@@ -264,7 +260,6 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Grid Statistiche */}
         <View style={styles.statsGrid}>
           {stats.map((stat, index) => (
             <TouchableOpacity
@@ -281,7 +276,7 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        {/* Pasti di Oggi */}
+
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Pasti di Oggi 🍽️</Text>
           <View style={styles.cardContainer}>
@@ -304,7 +299,6 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Istogramma Prodotti */}
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>
             Prodotti più Pianificati ({viewMode === 'week' ? 'Questa Settimana' : currentMonthName})
@@ -338,7 +332,6 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Grafico a Torta Ingredienti */}
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>
             Ingredienti & Alimenti Consumati ({viewMode === 'week' ? 'Questa Settimana' : currentMonthName})
@@ -390,7 +383,6 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Stato Dispensa & Spesa (AGGIORNATO CON SCROLL ORIZZONTALE) */}
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Stato Dispensa & Spesa ⚠️</Text>
           <View style={styles.cardContainer}>
@@ -411,7 +403,7 @@ export default function HomeScreen() {
 
             <Text style={styles.subContainerTitle}>Prodotti critici in dispensa:</Text>
             {expiringItems.length > 0 ? (
-              // ScrollView Orizzontale per scorrere infiniti prodotti senza allungare la pagina verticalmente
+            
               <ScrollView 
                 horizontal 
                 showsHorizontalScrollIndicator={true} 
