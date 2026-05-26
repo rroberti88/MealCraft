@@ -1,7 +1,8 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
+import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
@@ -14,21 +15,71 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
         tabBarButton: HapticTab,
+        tabBarStyle: {
+          backgroundColor: colorScheme === 'dark' ? '#0f172a' : '#ffffff',
+          borderTopWidth: 1,
+          borderColor: colorScheme === 'dark' ? '#1e293b' : '#e2e8f0',
+          paddingBottom: 5,
+          height: 60,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+        }
       }}>
+      
+ 
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons size={24} name={focused ? "home" : "home-outline"} color={color} />
+          ),
         }}
       />
+
       <Tabs.Screen
-        name="explore"
+        name="pantry"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Pantry',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons size={24} name={focused ? "cube" : "cube-outline"} color={color} />
+          ),
         }}
       />
+
+      <Tabs.Screen
+        name="planner"
+        options={{
+          title: 'Planner',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons size={24} name={focused ? "calendar" : "calendar-outline"} color={color} />
+          ),
+        }}
+      />
+
+    
+      <Tabs.Screen
+        name="recipes"
+        options={{
+          title: 'Recipes',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons size={24} name={focused ? "restaurant" : "restaurant-outline"} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="shopping"
+        options={{
+          title: 'Shopping',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons size={24} name={focused ? "cart" : "cart-outline"} color={color} />
+          ),
+        }}
+      />
+
     </Tabs>
   );
 }
