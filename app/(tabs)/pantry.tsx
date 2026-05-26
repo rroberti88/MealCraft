@@ -42,6 +42,7 @@ export default function PantryScreen() {
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('Tutti');
   
   const [formVisible, setFormVisible] = useState(false);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [customAlert, setCustomAlert] = useState({
     visible: false,
     type: 'success' as 'success' | 'warning' | 'error',
@@ -99,23 +100,58 @@ export default function PantryScreen() {
   }, [pantry, searchQuery, selectedCategory, statusFilter]);
 
   const addProductToPantry = () => {
-    const product = { 
-      ...newItem, 
-      id: Date.now().toString(), 
-      quantita: Number(newItem.quantita),
-
-    };
     LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
-    setPantry([...pantry, product]);
+  
+    if (editingItemId) {
+      setPantry(prevPantry => 
+        prevPantry.map(item => 
+          String(item.id) === String(editingItemId) 
+            ? { ...item, ...newItem, quantita: Number(newItem.quantita) }
+            : item
+        )
+      );
+      
+      setCustomAlert({
+        visible: true,
+        type: 'success',
+        title: 'MODIFICA COMPLETATA',
+        message: 'Il prodotto è stato aggiornato con successo!',
+        onConfirm: () => setCustomAlert(prev => ({ ...prev, visible: false }))
+      });
+    } else {
+      const product = { 
+        ...newItem, 
+        id: Date.now().toString(), 
+        quantita: Number(newItem.quantita),
+      };
+      setPantry(prevPantry => [...prevPantry, product]);
+      
+      setCustomAlert({
+        visible: true,
+        type: 'success',
+        title: 'OPERAZIONE RIUSCITA',
+        message: 'Il prodotto è stato aggiunto alla tua dispensa!',
+        onConfirm: () => setCustomAlert(prev => ({ ...prev, visible: false }))
+      });
+    }
+  
     setNewItem({ nome: '', categoria: '', quantita: '', unitaMisura: '', pesoEffettivo: '', scadenza: '', note: '' });
-    
-    setCustomAlert({
-      visible: true,
-      type: 'success',
-      title: 'OPERAZIONE RIUSCITA',
-      message: 'Il prodotto è stato aggiunto alla tua dispensa!',
-      onConfirm: () => setCustomAlert(prev => ({ ...prev, visible: false }))
+    setEditingItemId(null);
+    setFormVisible(false);
+  };
+
+  const handleEditItem = (item: any) => {
+    setNewItem({
+      nome: item.nome,
+      categoria: item.categoria,
+      quantita: String(item.quantita),
+      unitaMisura: item.unitaMisura || '',
+      pesoEffettivo: item.pesoEffettivo ? String(item.pesoEffettivo) : '',
+      scadenza: item.scadenza,
+      note: item.note || ''
     });
+    setEditingItemId(item.id);
+    setFormVisible(true);
   };
 
   const handleSave = () => {
@@ -133,12 +169,14 @@ export default function PantryScreen() {
     const diff = getDaysDiff(newItem.scadenza);
     setFormVisible(false);
 
+    const azioneTesto = editingItemId ? "modificarlo" : "aggiungerlo";
+
     if (diff !== null && diff < 0) {
       setCustomAlert({
         visible: true,
         type: 'error',
         title: 'PRODOTTO SCADUTO',
-        message: 'La data inserita è già passata. Confermi di volerlo aggiungere?',
+        message: `La data inserita è già passata. Confermi di volerlo ${azioneTesto}?`,
         onConfirm: () => {
           setCustomAlert(prev => ({ ...prev, visible: false }));
           addProductToPantry();
@@ -149,7 +187,7 @@ export default function PantryScreen() {
         visible: true,
         type: 'warning',
         title: 'SCADENZA BREVE',
-        message: `Attenzione: il prodotto scadrà tra ${diff === 0 ? 'OGGI' : diff + ' giorni'}.`,
+        message: `Attenzione: il prodotto scadrà tra ${diff === 0 ? 'OGGI' : diff + ' giorni'}. Vuoi procedere?`,
         onConfirm: () => {
           setCustomAlert(prev => ({ ...prev, visible: false }));
           addProductToPantry();
@@ -222,20 +260,28 @@ export default function PantryScreen() {
           const borderStyle = diff !== null && diff < 0 
             ? styles.expiredCard 
             : (diff !== null && diff <= 3 ? styles.warningCard : styles.goodCard);
-
+        
+          let stringaQuantita = '';
+          
+          if (item.pesoEffettivo) {
+            stringaQuantita = `${item.quantita} da ${item.pesoEffettivo} ${item.unitaMisura || ''}`;
+          } else {
+            stringaQuantita = `${item.quantita}`;
+          }
+        
           return (
             <View style={[styles.itemCard, borderStyle]}>
-              <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, paddingRight: 10 }}>
                 <Text style={styles.itemTitle}>{item.nome}</Text>
                
                 <Text style={styles.itemSub}>
-                  {item.categoria} • {item.quantita} {item.unitaMisura} 
-                  {item.pesoEffettivo ? ` (${item.pesoEffettivo}${item.unitaMisura})` : ''}
+                  {item.categoria} • {stringaQuantita}
                 </Text>
+                
                 <Text style={[styles.itemExpiry, diff !== null && diff < 0 && { color: '#FF3B30', fontWeight: 'bold' }]}>
                   Scadenza: {item.scadenza} {diff !== null && diff < 0 ? '(SCADUTO)' : ''}
                 </Text>
-
+        
                 {isPickerMode && (
                   <TouchableOpacity style={styles.selectBtn} onPress={() => handleSelectItem(item)}>
                     <Ionicons name="add-circle" size={16} color="#fff" />
@@ -245,9 +291,15 @@ export default function PantryScreen() {
               </View>
               
               {!isPickerMode && (
-                <TouchableOpacity onPress={() => setPantry(pantry.filter(i => i.id !== item.id))}>
-                  <Ionicons name="trash-outline" size={22} color="#FF3B30" />
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', gap: 15, alignItems: 'center' }}>
+                  <TouchableOpacity onPress={() => handleEditItem(item)}>
+                    <Ionicons name="create-outline" size={24} color="#007AFF" />
+                  </TouchableOpacity>
+        
+                  <TouchableOpacity onPress={() => setPantry(pantry.filter(i => i.id !== item.id))}>
+                    <Ionicons name="trash-outline" size={22} color="#FF3B30" />
+                  </TouchableOpacity>
+                </View>
               )}
             </View>
           );
@@ -257,7 +309,10 @@ export default function PantryScreen() {
       <Modal visible={formVisible} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Nuovo Ingrediente</Text>
+            <Text style={styles.modalTitle}>
+              {editingItemId ? "Modifica Prodotto" : "Nuovo Ingrediente"}
+            </Text>
+            
             <TextInput style={styles.input} placeholder="Nome prodotto *" value={newItem.nome} onChangeText={t => setNewItem({...newItem, nome: t})} />
             
             <Text style={styles.label}>Categoria *</Text>
@@ -274,14 +329,26 @@ export default function PantryScreen() {
               <TextInput style={[styles.input, { flex: 1 }]} placeholder="Unità (pz, kg...)" value={newItem.unitaMisura} onChangeText={t => setNewItem({...newItem, unitaMisura: t})} />
             </View>
 
-            
             <TextInput style={styles.input} placeholder="Peso/Volume (opzionale)" keyboardType="numeric" value={newItem.pesoEffettivo} onChangeText={t => setNewItem({...newItem, pesoEffettivo: t})} />
             
             <TextInput style={styles.input} placeholder="Scadenza (AAAA-MM-GG) *" value={newItem.scadenza} onChangeText={t => setNewItem({...newItem, scadenza: t})} />
             
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-              <TouchableOpacity style={[styles.btn, { backgroundColor: '#8E8E93' }]} onPress={() => setFormVisible(false)}><Text style={styles.btnText}>Annulla</Text></TouchableOpacity>
-              <TouchableOpacity style={[styles.btn, { backgroundColor: '#007AFF' }]} onPress={handleSave}><Text style={styles.btnText}>Salva</Text></TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.btn, { backgroundColor: '#8E8E93' }]} 
+                onPress={() => {
+                  setFormVisible(false);
+                  setEditingItemId(null);
+                }}
+              >
+                <Text style={styles.btnText}>Annulla</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={[styles.btn, { backgroundColor: '#007AFF' }]} onPress={handleSave}>
+                <Text style={styles.btnText}>
+                  {editingItemId ? "Aggiorna" : "Salva"}
+                </Text>
+              </TouchableOpacity>
             </View>
           </KeyboardAvoidingView>
         </View>
@@ -316,7 +383,14 @@ export default function PantryScreen() {
       </Modal>
 
       {!isPickerMode && (
-        <TouchableOpacity style={styles.fab} onPress={() => setFormVisible(true)}>
+        <TouchableOpacity 
+          style={styles.fab} 
+          onPress={() => {
+            setEditingItemId(null);
+            setNewItem({ nome: '', categoria: '', quantita: '', unitaMisura: '', pesoEffettivo: '', scadenza: '', note: '' });
+            setFormVisible(true);
+          }}
+        >
           <Ionicons name="add" size={35} color="white" />
         </TouchableOpacity>
       )}

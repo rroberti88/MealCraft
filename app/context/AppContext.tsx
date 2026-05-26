@@ -22,6 +22,7 @@ export interface PantryItem {
   quantita: number;
   unitaMisura: string;
   scadenza: string;
+  pesoEffettivo: string;
 }
 
 export interface ShoppingItem {

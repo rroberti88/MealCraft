@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   FlatList,
   Image,
@@ -129,82 +129,97 @@ export default function RecipesScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>{isPickerMode ? "Scegli Ricetta" : "Le Mie Ricette"}</Text>
-          {isPickerMode && (
-             <TouchableOpacity onPress={() => router.setParams({ pickerMode: undefined, mealType: undefined })}>
-                <Text style={{color: '#ef4444', fontWeight: 'bold'}}>Annulla selezione</Text>
-             </TouchableOpacity>
-          )}
-        </View>
-
-        {!isPickerMode && (
-          <TouchableOpacity onPress={() => openForm()}>
-            <Ionicons name="add-circle" size={55} color="#2f95dc" />
-          </TouchableOpacity>
+    <View style={styles.header}>
+      <View>
+        <Text style={styles.headerTitle}>{isPickerMode ? "Scegli Ricetta" : "Le Mie Ricette"}</Text>
+        {isPickerMode && (
+           <TouchableOpacity onPress={() => router.setParams({ pickerMode: undefined, mealType: undefined })}>
+              <Text style={{color: '#ef4444', fontWeight: 'bold'}}>Annulla selezione</Text>
+           </TouchableOpacity>
         )}
       </View>
 
-      <FlatList 
-        data={recipes} 
-        keyExtractor={(item) => item.id.toString()} 
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <TouchableOpacity 
-              activeOpacity={0.7}
-              onPress={() => setSelectedId(selectedId === item.id.toString() ? null : item.id.toString())}
-            >
-              <Image source={{ uri: item.immagine }} style={styles.cardImg} />
-              <View style={styles.cardContent}>
-                <View style={styles.rowBetween}>
-                  <Text style={styles.title}>{item.nome}</Text>
-                  <Text style={styles.badge}>⏱ {item.tempoPreparazione}m</Text>
-                </View>
-                <Text style={styles.catText}>{item.categoria} • {item.difficolta}</Text>
-                
-                {isPickerMode && (
-                  <TouchableOpacity 
-                    style={styles.selectBtn} 
-                    onPress={() => handleSelectForPlanner(item)}
+      {!isPickerMode && (
+        <TouchableOpacity onPress={() => openForm()}>
+          <Ionicons name="add-circle" size={55} color="#2f95dc" />
+        </TouchableOpacity>
+      )}
+    </View>
+
+    <FlatList 
+      data={recipes} 
+      keyExtractor={(item) => item.id.toString()} 
+      renderItem={({ item }) => (
+        <View style={styles.card}>
+          <TouchableOpacity 
+            activeOpacity={0.7}
+            onPress={() => setSelectedId(selectedId === item.id.toString() ? null : item.id.toString())}
+          >
+            <Image source={{ uri: item.immagine }} style={styles.cardImg} />
+            <View style={styles.cardContent}>
+              <View style={styles.rowBetween}>
+                <Text style={styles.title}>{item.nome}</Text>
+                <Text style={styles.badge}>⏱ {item.tempoPreparazione}m</Text>
+              </View>
+              <Text style={styles.catText}>{item.categoria} • {item.difficolta}</Text>
+              
+              {isPickerMode && (
+                <TouchableOpacity 
+                  style={styles.selectBtn} 
+                  onPress={() => handleSelectForPlanner(item)}
+                >
+                  <Text style={styles.selectBtnText}>SELEZIONA PER {String(mealType).toUpperCase()}</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </TouchableOpacity>
+
+          {selectedId === item.id.toString() && (
+            <View style={styles.details}>
+              {item.descrizione ? (
+                <>
+                  <Text style={styles.sub}>Descrizione:</Text>
+                  <Text style={styles.txt}>{item.descrizione}</Text>
+                </>
+              ) : null}
+
+              <Text style={styles.sub}>Ingredienti:</Text>
+              {item.ingredienti?.map((ing: any, i: number) => (
+                <Text key={i} style={styles.txt}>• {ing.nome} ({ing.qta})</Text>
+              ))}
+
+              <Text style={styles.sub}>Procedimento:</Text>
+              <Text style={styles.txt}>{item.procedimento}</Text>
+              
+              {item.note ? (
+                <>
+                  <Text style={styles.sub}>Note:</Text>
+                  <Text style={styles.txt}>{item.note}</Text>
+                </>
+              ) : null}
+
+              {!isPickerMode && (
+                <View style={styles.actions}>
+                  <Pressable 
+                    onPress={() => openForm(item)}
+                    style={({ pressed }) => [styles.actionButton, { opacity: pressed ? 0.6 : 1 }]}
                   >
-                    <Text style={styles.selectBtnText}>SELEZIONA PER {String(mealType).toUpperCase()}</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            </TouchableOpacity>
-
-            {selectedId === item.id.toString() && (
-              <View style={styles.details}>
-                <Text style={styles.sub}>Ingredienti:</Text>
-                {item.ingredienti?.map((ing: any, i: number) => (
-                  <Text key={i} style={styles.txt}>• {ing.nome} ({ing.qta})</Text>
-                ))}
-                <Text style={styles.sub}>Procedimento:</Text>
-                <Text style={styles.txt}>{item.procedimento}</Text>
-                {!isPickerMode && (
-                  <View style={styles.actions}>
-                    <Pressable 
-                      onPress={() => openForm(item)}
-                      style={({ pressed }) => [styles.actionButton, { opacity: pressed ? 0.6 : 1 }]}
-                    >
-                      <Ionicons name="pencil" size={26} color="#2f95dc"/>
-                    </Pressable>
-                    <Pressable 
-                      onPress={() => openDeleteConfirm(item.id)}
-                      style={({ pressed }) => [styles.actionButton, { opacity: pressed ? 0.6 : 1 }]}
-                    >
-                      <Ionicons name="trash" size={26} color="red"/>
-                    </Pressable>
-                  </View>
-                )}
-              </View>
-            )}
-          </View>
-        )} 
-      />
-
-      {/* MODAL NUOVA/MODIFICA RICETTA */}
+                    <Ionicons name="pencil" size={26} color="#2f95dc"/>
+                  </Pressable>
+                  <Pressable 
+                    onPress={() => openDeleteConfirm(item.id)}
+                    style={({ pressed }) => [styles.actionButton, { opacity: pressed ? 0.6 : 1 }]}
+                  >
+                    <Ionicons name="trash" size={26} color="red"/>
+                  </Pressable>
+                </View>
+              )}
+            </View>
+          )}
+        </View>
+      )} 
+    />
+    
       <Modal visible={modalVisible} animationType="slide">
         <View style={styles.modalTop}>
           <Text style={styles.modalTitle}>{editingRecipe ? 'Modifica' : 'Nuova'}</Text>
@@ -228,6 +243,13 @@ export default function RecipesScreen() {
                 <TextInput style={styles.input} keyboardType="numeric" value={form.porzioni} onChangeText={t => setForm({...form, porzioni: t})} />
               </View>
             </View>
+          
+              <Text style={styles.label}>DESCRIZIONE</Text>
+              <TextInput style={styles.input} value={form.descrizione} onChangeText={t => setForm({...form, descrizione: t})} />
+
+              <Text style={styles.label}>NOTE</Text>
+              <TextInput style={styles.input} value={form.note} onChangeText={t => setForm({...form, note: t})} />
+
             <Text style={styles.label}>INGREDIENTI</Text>
             {form.ingredienti.map((ing, index) => (
               <View key={index} style={styles.ingRow}>
