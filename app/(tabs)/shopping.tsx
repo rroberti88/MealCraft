@@ -40,9 +40,13 @@ export default function ShoppingScreen() {
   const [weight, setWeight] = useState(''); 
   const [shoppingList, setShoppingList] = useState<{ title: string, data: any[] }[]>([]);
 
+  // Modal Stati
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [itemToDelete, setItemToDelete] = useState<{section: string, id: string, nome: string} | null>(null);
   const [editingSection, setEditingSection] = useState('');
+  
   const [finalQty, setFinalQty] = useState('');
   const [finalWeight, setFinalWeight] = useState('');
   const [expiryMode, setExpiryMode] = useState<'days' | 'date'>('days');
@@ -79,7 +83,7 @@ export default function ShoppingScreen() {
     const newItem = {
       id: Math.random().toString(36).substr(2, 9),
       nome: productName,
-      qta: quantity,
+      qta: quantity || '1',
       unita: unit,
       peso: unit === 'pz' ? '' : weight,
       preso: false,
@@ -111,7 +115,6 @@ export default function ShoppingScreen() {
 
   const confirmPurchase = () => {
     let finalExpiryDate = "";
-    
     if (expiryMode === 'days') {
       const days = parseInt(expValue.replace(/[^0-9]/g, '') || '0');
       const d = new Date();
@@ -145,6 +148,39 @@ export default function ShoppingScreen() {
     ));
   };
 
+  const updateQuantity = (sectionTitle: string, id: string, inc: number) => {
+    setShoppingList(prev => prev.map(s => {
+      if (s.title === sectionTitle) {
+        return {
+          ...s,
+          data: s.data.map(i => {
+            if (i.id === id) {
+              const cur = parseInt(i.qta) || 1;
+              return { ...i, qta: Math.max(1, cur + inc).toString() };
+            }
+            return i;
+          })
+        };
+      }
+      return s;
+    }));
+  };
+
+  // --- LOGICA CANCELLAZIONE CON MODAL ---
+  const triggerDeleteRequest = (section: string, item: any) => {
+    setItemToDelete({ section, id: item.id, nome: item.nome });
+    setIsDeleteModalVisible(true);
+  };
+
+  const confirmDelete = () => {
+    if (!itemToDelete) return;
+    setShoppingList(prev => prev.map(s => 
+      s.title === itemToDelete.section ? { ...s, data: s.data.filter(i => i.id !== itemToDelete.id) } : s
+    ).filter(s => s.data.length > 0));
+    setIsDeleteModalVisible(false);
+    setItemToDelete(null);
+  };
+
   const finalizeShopping = () => {
     const purchased = shoppingList.flatMap(s => s.data.filter(i => i.preso).map(i => ({
       ...i, 
@@ -154,9 +190,7 @@ export default function ShoppingScreen() {
       pesoEffettivo: i.peso,
       scadenza: i.scadenza
     })));
-
     if (purchased.length === 0) return Alert.alert("Info", "Nessun prodotto selezionato");
-    
     purchased.forEach(p => addToPantry(p));
     Alert.alert("Successo!", "Prodotti aggiunti alla Dispensa");
     setShoppingList(prev => prev.map(s => ({ ...s, data: s.data.filter(i => !i.preso) })).filter(s => s.data.length > 0));
@@ -165,11 +199,9 @@ export default function ShoppingScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
-        
         <View style={styles.inputCard}>
           <Text style={styles.inputTitle}>Cosa manca?</Text>
           <TextInput style={styles.input} placeholder="Nome prodotto (es. Pasta)" value={productName} onChangeText={setProductName} />
-          
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
             {CATEGORIES.map(cat => (
               <TouchableOpacity key={cat} style={[styles.chip, selectedCat === cat && { backgroundColor: CATEGORY_COLORS[cat] }]} onPress={() => setSelectedCat(cat)}>
@@ -177,19 +209,9 @@ export default function ShoppingScreen() {
               </TouchableOpacity>
             ))}
           </ScrollView>
-
           <View style={styles.row}>
             <TextInput style={[styles.input, { flex: 0.8, marginBottom: 0 }]} keyboardType="numeric" placeholder="Qta" value={quantity} onChangeText={setQuantity} />
-            
-            <TextInput 
-              style={[styles.input, { flex: 1, marginBottom: 0, opacity: unit === 'pz' ? 0.3 : 1 }]} 
-              keyboardType="numeric" 
-              placeholder="Peso/Vol" 
-              value={weight} 
-              onChangeText={setWeight}
-              editable={unit !== 'pz'} 
-            />
-
+            <TextInput style={[styles.input, { flex: 1, marginBottom: 0, opacity: unit === 'pz' ? 0.3 : 1 }]} keyboardType="numeric" placeholder="Peso/Vol" value={weight} onChangeText={setWeight} editable={unit !== 'pz'} />
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 2 }}>
               <View style={styles.unitContainer}>
                 {UNITS.map(u => (
@@ -209,15 +231,29 @@ export default function ShoppingScreen() {
           sections={shoppingList}
           keyExtractor={(item) => item.id}
           renderItem={({ item, section }) => (
-            <TouchableOpacity style={styles.itemRow} onPress={() => openPurchaseModal(section.title, item)}>
-              <Ionicons name={item.preso ? "checkbox" : "square-outline"} size={26} color={item.preso ? "#10b981" : "#cbd5e1"} />
-              <View>
-                <Text style={[styles.itemName, item.preso && styles.strikethrough]}>{item.nome}</Text>
-                <Text style={styles.itemDetails}>
-                  {item.qta} {item.peso ? `${item.peso} ` : ''}{item.unita}
-                </Text>
+            <View style={styles.itemRowContainer}>
+              <TouchableOpacity style={styles.itemRow} onPress={() => openPurchaseModal(section.title, item)}>
+                <Ionicons name={item.preso ? "checkbox" : "square-outline"} size={26} color={item.preso ? "#10b981" : "#cbd5e1"} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.itemName, item.preso && styles.strikethrough]}>{item.nome}</Text>
+                  <Text style={styles.itemDetails}>
+                    {item.qta} x {item.peso ? `${item.peso} ` : ''}{item.unita}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+
+              <View style={styles.actionButtons}>
+                <TouchableOpacity onPress={() => updateQuantity(section.title, item.id, -1)} style={styles.iconBtn}>
+                  <Ionicons name="remove-circle-outline" size={22} color="#94a3b8" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => updateQuantity(section.title, item.id, 1)} style={styles.iconBtn}>
+                  <Ionicons name="add-circle-outline" size={22} color="#94a3b8" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => triggerDeleteRequest(section.title, item)} style={styles.iconBtn}>
+                  <Ionicons name="trash-outline" size={20} color="#f87171" />
+                </TouchableOpacity>
               </View>
-            </TouchableOpacity>
+            </View>
           )}
           renderSectionHeader={({ section: { title } }) => (
             <Text style={[styles.sectionTitle, { color: CATEGORY_COLORS[title] }]}>{title.toUpperCase()}</Text>
@@ -226,30 +262,16 @@ export default function ShoppingScreen() {
           contentContainerStyle={{ paddingBottom: 100 }}
         />
 
+        {/* MODAL CONFERMA ACQUISTO (Pantry) */}
         <Modal visible={isModalVisible} transparent animationType="fade">
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Conferma Acquisto</Text>
               <Text style={styles.modalSubtitle}>{editingItem?.nome}</Text>
-
-              <TextInput 
-                style={styles.input} 
-                keyboardType="numeric" 
-                placeholder="Quantità finale" 
-                value={finalQty} 
-                onChangeText={setFinalQty} 
-              />
-              
+              <TextInput style={styles.input} keyboardType="numeric" placeholder="Quantità finale" value={finalQty} onChangeText={setFinalQty} />
               {editingItem?.unita !== 'pz' && (
-                <TextInput 
-                  style={styles.input} 
-                  keyboardType="numeric" 
-                  placeholder={`Peso finale (${editingItem?.unita})`} 
-                  value={finalWeight} 
-                  onChangeText={setFinalWeight} 
-                />
+                <TextInput style={styles.input} keyboardType="numeric" placeholder={`Peso finale (${editingItem?.unita})`} value={finalWeight} onChangeText={setFinalWeight} />
               )}
-
               <View style={styles.expiryToggleRow}>
                 <View style={styles.toggleContainer}>
                   <TouchableOpacity onPress={() => setExpiryMode('days')} style={[styles.toggleBtn, expiryMode === 'days' && styles.toggleBtnActive]}>
@@ -260,14 +282,7 @@ export default function ShoppingScreen() {
                   </TouchableOpacity>
                 </View>
               </View>
-              
-              <TextInput 
-                style={styles.input} 
-                placeholder={expiryMode === 'days' ? "Esempio: 10" : "GG/MM/AAAA"} 
-                value={expValue} 
-                onChangeText={setExpValue} 
-              />
-
+              <TextInput style={styles.input} placeholder={expiryMode === 'days' ? "Esempio: 10" : "GG/MM/AAAA"} value={expValue} onChangeText={setExpValue} />
               <View style={[styles.row, { marginTop: 10 }]}>
                 <TouchableOpacity style={[styles.modalBtn, { backgroundColor: '#f1f5f9' }]} onPress={() => setIsModalVisible(false)}>
                   <Text style={{ color: '#64748b', fontWeight: 'bold' }}>Annulla</Text>
@@ -280,10 +295,37 @@ export default function ShoppingScreen() {
           </View>
         </Modal>
 
+        {/* --- NUOVO MODAL: CONFERMA ELIMINAZIONE --- */}
+        <Modal visible={isDeleteModalVisible} transparent animationType="slide">
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { borderTopWidth: 5, borderTopColor: '#f87171' }]}>
+              <Ionicons name="warning-outline" size={40} color="#f87171" style={{ alignSelf: 'center', marginBottom: 10 }} />
+              <Text style={styles.modalTitle}>Elimina Prodotto</Text>
+              <Text style={[styles.modalSubtitle, { color: '#64748b' }]}>
+                Sei sicuro di voler rimuovere <Text style={{fontWeight: 'bold', color: '#1e293b'}}>{itemToDelete?.nome}</Text>?
+              </Text>
+              
+              <View style={[styles.row, { marginTop: 15 }]}>
+                <TouchableOpacity 
+                  style={[styles.modalBtn, { backgroundColor: '#f1f5f9' }]} 
+                  onPress={() => setIsDeleteModalVisible(false)}
+                >
+                  <Text style={{ color: '#64748b', fontWeight: 'bold' }}>Mantieni</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.modalBtn, { backgroundColor: '#f87171' }]} 
+                  onPress={confirmDelete}
+                >
+                  <Text style={{ color: '#fff', fontWeight: 'bold' }}>Elimina</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
         <TouchableOpacity style={styles.finalizeBtn} onPress={finalizeShopping}>
           <Text style={styles.finalizeBtnText}>Sposta in Dispensa</Text>
         </TouchableOpacity>
-
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -303,9 +345,12 @@ const styles = StyleSheet.create({
   unitBtnText: { fontSize: 12, fontWeight: '700', color: '#64748b' },
   addButton: { backgroundColor: '#4f46e5', width: 48, height: 48, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
   sectionTitle: { fontSize: 11, fontWeight: '900', letterSpacing: 1.5, marginLeft: 20, marginTop: 20, marginBottom: 5 },
-  itemRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', padding: 15, marginHorizontal: 20, marginTop: 8, borderRadius: 18, gap: 12 },
+  itemRowContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', marginHorizontal: 20, marginTop: 8, borderRadius: 18, paddingRight: 10 },
+  itemRow: { flex: 1, flexDirection: 'row', alignItems: 'center', padding: 15, gap: 12 },
+  actionButtons: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  iconBtn: { padding: 5 },
   itemName: { fontSize: 16, fontWeight: '700', color: '#334155' },
-  itemDetails: { fontSize: 12, color: '#94a3b8' },
+  itemDetails: { fontSize: 12, color: '#94a3b8', marginTop: 2 },
   strikethrough: { textDecorationLine: 'line-through', color: '#cbd5e1' },
   empty: { textAlign: 'center', marginTop: 40, color: '#94a3b8' },
   finalizeBtn: { position: 'absolute', bottom: 20, left: 20, right: 20, backgroundColor: '#0f172a', padding: 18, borderRadius: 20, alignItems: 'center' },
