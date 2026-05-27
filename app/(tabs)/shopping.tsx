@@ -29,7 +29,6 @@ const CATEGORY_COLORS: { [key: string]: string } = {
   'Altro': '#94a3b8'
 };
 
-// Mappatura dei placeholder per il nome prodotto
 const CATEGORY_PLACEHOLDERS: { [key: string]: string } = {
   'Bibite': 'es. Acqua, Aranciata...',
   'Carboidrati': 'es. Pasta, Pane, Riso...',
@@ -51,7 +50,6 @@ export default function ShoppingScreen() {
   const [weight, setWeight] = useState(''); 
   const [shoppingList, setShoppingList] = useState<{ title: string, data: any[] }[]>([]);
 
-  // Modal Stati
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -214,7 +212,7 @@ export default function ShoppingScreen() {
           
           <TextInput 
             style={styles.input} 
-            placeholder={CATEGORY_PLACEHOLDERS[selectedCat]} // Placeholder Dinamico
+            placeholder={CATEGORY_PLACEHOLDERS[selectedCat]} 
             placeholderTextColor="#94a3b8"
             value={productName} 
             onChangeText={setProductName} 
@@ -240,7 +238,7 @@ export default function ShoppingScreen() {
             <TextInput 
               style={[styles.input, { flex: 1, marginBottom: 0, opacity: unit === 'pz' ? 0.3 : 1 }]} 
               keyboardType="numeric" 
-              placeholder={unit === 'pz' ? "N/A" : "Peso"} // Placeholder Dinamico per unità
+              placeholder={unit === 'pz' ? "N/A" : "Peso"} 
               placeholderTextColor="#94a3b8"
               value={weight} 
               onChangeText={setWeight} 

@@ -137,7 +137,27 @@ export default function PantryScreen() {
         id: Date.now().toString(), 
         quantita: Number(newItem.quantita),
       };
-      setPantry(prevPantry => [...prevPantry, product]);
+      
+      setPantry(prevPantry => {
+        const existingIndex = prevPantry.findIndex(i => 
+          i.nome.toLowerCase().trim() === product.nome.toLowerCase().trim() && 
+          i.scadenza === product.scadenza &&
+          i.pesoEffettivo.trim() === product.pesoEffettivo.trim()
+        );
+
+        if (existingIndex !== -1) {
+          return prevPantry.map((item, index) => {
+            if (index === existingIndex) {
+              return { 
+                ...item, 
+                quantita: (item.quantita || 0) + product.quantita
+              };
+            }
+            return item;
+          });
+        }
+        return [...prevPantry, product];
+      });
       
       setCustomAlert({
         visible: true,
@@ -276,9 +296,12 @@ export default function PantryScreen() {
             : (diff !== null && diff <= 3 ? styles.warningCard : styles.goodCard);
         
           let stringaQuantita = '';
-          
           if (item.pesoEffettivo) {
-            stringaQuantita = `${item.quantita} da ${item.pesoEffettivo} ${item.unitaMisura || ''}`;
+            const pesoUnitario = parseFloat(item.pesoEffettivo) || 0;
+            const pezzi = Number(item.quantita) || 0;
+            const pesoTotale = pezzi * pesoUnitario;
+
+            stringaQuantita = `${pezzi} x ${pesoUnitario} ${item.unitaMisura || ''} (Totale: ${pesoTotale} ${item.unitaMisura || ''})`;
           } else {
             stringaQuantita = `${item.quantita} ${item.unitaMisura || ''}`;
           }
@@ -343,7 +366,7 @@ export default function PantryScreen() {
               <TextInput style={[styles.input, { flex: 1 }]} placeholder="Unità (pz, kg...)" value={newItem.unitaMisura} onChangeText={t => setNewItem({...newItem, unitaMisura: t})} />
             </View>
 
-            <TextInput style={styles.input} placeholder="Peso/Volume (opzionale)" keyboardType="numeric" value={newItem.pesoEffettivo} onChangeText={t => setNewItem({...newItem, pesoEffettivo: t})} />
+            <TextInput style={styles.input} placeholder="Peso/Volume singolo (opzionale)" keyboardType="numeric" value={newItem.pesoEffettivo} onChangeText={t => setNewItem({...newItem, pesoEffettivo: t})} />
             
             <TextInput style={styles.input} placeholder="Scadenza (AAAA-MM-GG) *" value={newItem.scadenza} onChangeText={t => setNewItem({...newItem, scadenza: t})} />
             
