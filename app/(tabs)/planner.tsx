@@ -17,7 +17,7 @@ import { Calendar } from 'react-native-calendars';
 import { useAppContext } from '../context/AppContext';
 
 export default function PlannerScreen() {
-  const { plan, updatePlan, removeFromPlan } = useAppContext();
+  const { plan, updatePlan, removeFromPlan, openPicker, closePicker } = useAppContext();
   const params = useLocalSearchParams();
   const router = useRouter();
   
@@ -40,6 +40,8 @@ export default function PlannerScreen() {
           });
 
           router.setParams({ selectedItem: undefined, item: undefined, origin: undefined, mealType: undefined });
+
+          closePicker();
         } catch (e) {
           console.error("Errore parsing ritorno:", e);
         }
@@ -171,13 +173,15 @@ export default function PlannerScreen() {
             <View style={styles.selectionSheet}>
               <View style={styles.sheetHandle} />
               <Text style={styles.sheetTitle}>Aggiungi a {activeMealType}</Text>
-              
-             
+
               <TouchableOpacity 
                 style={styles.sheetOption} 
                 onPress={() => {
                   setSelectionModalVisible(false);
-                  router.navigate({ pathname: '/recipes', params: { pickerMode: 'true', mealType: activeMealType } });
+                  if (activeMealType) {
+                    openPicker('recipes', activeMealType);
+                  }
+                  router.navigate({ pathname: '/recipes' });
                 }}>
                 <Ionicons name="restaurant" size={24} color="#3b82f6" />
                 <Text style={styles.sheetOptionText}>Usa una Ricetta</Text>
@@ -187,7 +191,10 @@ export default function PlannerScreen() {
                 style={[styles.sheetOption, { backgroundColor: '#ecfdf5' }]} 
                 onPress={() => {
                   setSelectionModalVisible(false);
-                  router.navigate({ pathname: '/pantry', params: { pickerMode: 'true', mealType: activeMealType } });
+                  if (activeMealType) {
+                    openPicker('pantry', activeMealType);
+                  }
+                  router.navigate({ pathname: '/pantry' });
                 }}>
                 <Ionicons name="basket" size={24} color="#10b981" />
                 <Text style={styles.sheetOptionText}>Dalla Dispensa</Text>

@@ -31,11 +31,18 @@ export interface ShoppingItem {
   preso: boolean;
 }
 
+export interface PickerState {
+  isOpen: boolean;
+  mealType: string | null;
+  target: 'pantry' | 'recipes' | null;
+}
+
 interface AppContextType {
   recipes: Recipe[];
   pantry: PantryItem[];
   shoppingList: ShoppingItem[];
   plan: Record<string, any>;
+  activePicker: PickerState | null; 
   setPantry: React.Dispatch<React.SetStateAction<PantryItem[]>>;
   setRecipes: React.Dispatch<React.SetStateAction<Recipe[]>>;
   setShoppingList: React.Dispatch<React.SetStateAction<ShoppingItem[]>>;
@@ -46,6 +53,8 @@ interface AppContextType {
   addToShoppingList: (items: string[]) => void;
   updatePlan: (date: string, mealType: string, item: any) => void;
   removeFromPlan: (date: string, mealType: string, instanceId: string) => void;
+  openPicker: (target: 'pantry' | 'recipes', mealType: string) => void; 
+  closePicker: () => void; 
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -56,6 +65,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([]);
   const [plan, setPlan] = useState<Record<string, any>>({});
   const [isLoaded, setIsLoaded] = useState(false);
+  const [activePicker, setActivePicker] = useState<PickerState | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -98,6 +108,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [pantry, recipes, shoppingList, plan, isLoaded]);
 
+  const openPicker = (target: 'pantry' | 'recipes', mealType: string) => {
+    setActivePicker({ isOpen: true, mealType, target });
+  };
+
+  const closePicker = () => {
+    setActivePicker(null);
+  };
+
   const addRecipe = (newRecipe: Recipe) => {
     setRecipes(prev => [{ ...newRecipe, id: String(newRecipe.id) }, ...prev]);
   };
@@ -106,16 +124,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setRecipes(prev => prev.map(r => String(r.id) === String(updatedRecipe.id) ? updatedRecipe : r));
   };
 
- 
-const deleteRecipe = (id: string) => {
- 
-  const stringId = String(id);
-  setRecipes(prev => {
-    const newRecipes = prev.filter(r => String(r.id) !== stringId);
-    console.log("Ricette rimanenti:", newRecipes.length); 
-    return newRecipes;
-  });
-};
+  const deleteRecipe = (id: string) => {
+    const stringId = String(id);
+    setRecipes(prev => {
+      const newRecipes = prev.filter(r => String(r.id) !== stringId);
+      console.log("Ricette rimanenti:", newRecipes.length); 
+      return newRecipes;
+    });
+  };
+
   const addToPantry = (newItem: PantryItem) => {
     setPantry(prev => {
       const existing = prev.find(i => i.nome.toLowerCase() === newItem.nome.toLowerCase());
@@ -160,9 +177,10 @@ const deleteRecipe = (id: string) => {
 
   return (
     <AppContext.Provider value={{
-      recipes, pantry, shoppingList, plan,
+      recipes, pantry, shoppingList, plan, activePicker, 
       setPantry, setRecipes, setShoppingList, addToPantry, addRecipe, updateRecipe, deleteRecipe,
-      addToShoppingList, updatePlan, removeFromPlan
+      addToShoppingList, updatePlan, removeFromPlan,
+      openPicker, closePicker 
     }}>
       {children}
     </AppContext.Provider>

@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useIsFocused } from '@react-navigation/native';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -21,7 +22,8 @@ export default function RecipesScreen() {
   const params = useLocalSearchParams();
   const router = useRouter();
   const navigation = useNavigation();
-  const { recipes, addRecipe, updateRecipe, deleteRecipe } = useAppContext();
+  const isFocused = useIsFocused();
+  const { recipes, addRecipe, updateRecipe, deleteRecipe, activePicker, closePicker } = useAppContext();
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -29,37 +31,20 @@ export default function RecipesScreen() {
 
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [recipeToDelete, setRecipeToDelete] = useState<string | null>(null);
-
-  const [isPickerMode, setIsPickerMode] = useState(false);
-  const [mealType, setMealType] = useState<any>(null);
+  const isPickerMode = activePicker?.isOpen && activePicker?.target === 'recipes';
+  const mealType = activePicker?.mealType;
 
   useEffect(() => {
-    if (params?.pickerMode === 'true') {
-      setIsPickerMode(true);
-      setMealType(params?.mealType);
-    } else {
-      setIsPickerMode(false);
-      setMealType(null);
+    if (!isFocused) {
+      closePicker();
     }
+  }, [isFocused]);
 
-    if (params?.recipeIdOpen) {
+  useEffect(() => {
+    if (isFocused && params?.recipeIdOpen) {
       setSelectedId(params.recipeIdOpen as string);
     }
-  }, [params?.pickerMode, params?.mealType, params?.recipeIdOpen]);
-
-  useEffect(() => {
-    const tabParent = navigation.getParent();
-    if (!tabParent) return;
-
-    const unsubscribeTabPress = tabParent.addListener('tabPress', (e) => {
-      
-      setIsPickerMode(false);
-      setMealType(null);
-      router.setParams({ pickerMode: undefined, mealType: undefined, recipeIdOpen: undefined });
-    });
-
-    return unsubscribeTabPress;
-  }, [navigation]);
+  }, [isFocused, params?.recipeIdOpen]);
 
   const [form, setForm] = useState({
     nome: '', descrizione: '', categoria: '', tempo: '', porzioni: '', 
@@ -69,8 +54,7 @@ export default function RecipesScreen() {
   });
 
   const handleCancelSelection = () => {
-    setIsPickerMode(false);
-    setMealType(null);
+    closePicker();
     router.setParams({ pickerMode: undefined, mealType: undefined, recipeIdOpen: undefined });
   };
 
@@ -79,12 +63,12 @@ export default function RecipesScreen() {
       pathname: '/planner',
       params: {
         selectedItem: 'true',
-        mealType: mealType,
+        mealType: mealType, 
         item: JSON.stringify(recipe),
         origin: 'recipe'
       }
     });
-    handleCancelSelection();
+    closePicker(); 
   };
 
   const openForm = (recipe?: any) => {
@@ -156,10 +140,10 @@ export default function RecipesScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>{isPickerMode ? "Scegli Ricetta" : "Le Mie Ricette"}</Text>
           {isPickerMode && (
-             <TouchableOpacity onPress={handleCancelSelection}>
+             <TouchableOpacity onPress={handleCancelSelection} style={{ marginTop: 5 }}>
                 <Text style={{color: '#ef4444', fontWeight: 'bold'}}>Annulla selezione</Text>
              </TouchableOpacity>
           )}
@@ -175,6 +159,7 @@ export default function RecipesScreen() {
       <FlatList 
         data={recipes} 
         keyExtractor={(item) => item.id.toString()} 
+        contentContainerStyle={{ paddingBottom: 30 }}
         renderItem={({ item }) => (
           <View style={styles.card}>
             <TouchableOpacity 

@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useIsFocused } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -30,12 +31,10 @@ const CATEGORIES = [
 type FilterStatus = 'Tutti' | 'Scadenze' | 'Esaurimento' | 'InStato';
 
 export default function PantryScreen() {
-  const { pantry, setPantry } = useAppContext();
+  const { pantry, setPantry, activePicker, closePicker } = useAppContext();
   const router = useRouter(); 
   const params = useLocalSearchParams(); 
-
-  const isPickerMode = params?.pickerMode === 'true';
-  const mealType = params?.mealType;
+  const isFocused = useIsFocused();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Tutte');
@@ -55,6 +54,15 @@ export default function PantryScreen() {
     nome: '', categoria: '', quantita: '', unitaMisura: '', pesoEffettivo: '', scadenza: '', note: ''
   });
 
+  const isPickerMode = activePicker?.isOpen && activePicker?.target === 'pantry';
+  const mealType = activePicker?.mealType;
+
+  useEffect(() => {
+    if (!isFocused) {
+      closePicker();
+    }
+  }, [isFocused]);
+
   const getDaysDiff = (dateStr: string) => {
     if (!dateStr || !dateStr.includes('-')) return null;
     try {
@@ -72,11 +80,16 @@ export default function PantryScreen() {
       pathname: '/planner',
       params: {
         selectedItem: 'true',
-        mealType: mealType,
+        mealType: mealType, 
         item: JSON.stringify(item),
         origin: 'pantry'
       }
     });
+    closePicker(); 
+  };
+
+  const handleCancelSelection = () => {
+    closePicker(); 
     router.setParams({ pickerMode: undefined, mealType: undefined });
   };
 
@@ -202,11 +215,11 @@ export default function PantryScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.topSection}>
         <Text style={styles.headerTitle}>
-          {isPickerMode ? `Scegli per ${mealType}` : "Dispensa Intelligente"}
+          {isPickerMode ? `Scegli per ${String(mealType || '').toUpperCase()}` : "Dispensa Intelligente"}
         </Text>
         
         {isPickerMode && (
-          <TouchableOpacity onPress={() => router.setParams({ pickerMode: undefined })}>
+          <TouchableOpacity onPress={handleCancelSelection}>
             <Text style={{color: '#FF3B30', fontWeight: 'bold', marginBottom: 10}}>← Annulla selezione</Text>
           </TouchableOpacity>
         )}
@@ -255,6 +268,7 @@ export default function PantryScreen() {
       <FlatList
         data={filteredItems}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingBottom: 100 }}
         renderItem={({ item }) => {
           const diff = getDaysDiff(item.scadenza);
           const borderStyle = diff !== null && diff < 0 
@@ -266,7 +280,7 @@ export default function PantryScreen() {
           if (item.pesoEffettivo) {
             stringaQuantita = `${item.quantita} da ${item.pesoEffettivo} ${item.unitaMisura || ''}`;
           } else {
-            stringaQuantita = `${item.quantita}`;
+            stringaQuantita = `${item.quantita} ${item.unitaMisura || ''}`;
           }
         
           return (
@@ -275,7 +289,7 @@ export default function PantryScreen() {
                 <Text style={styles.itemTitle}>{item.nome}</Text>
                
                 <Text style={styles.itemSub}>
-                  {item.categoria} • {stringaQuantita}
+                  {item.categoria} • {stringaQuantita.trim()}
                 </Text>
                 
                 <Text style={[styles.itemExpiry, diff !== null && diff < 0 && { color: '#FF3B30', fontWeight: 'bold' }]}>
