@@ -18,6 +18,16 @@ import {
 } from 'react-native';
 import { useAppContext } from '../context/AppContext';
 
+// MAPPATURA IMMAGINI HD - VERIFICA QUESTI LINK
+const CATEGORY_IMAGES: { [key: string]: string } = {
+  'antipasto': 'https://images.unsplash.com/photo-1541529086526-db283c563270?w=800', 
+  'primo': 'https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800',    
+  'secondo': 'https://images.unsplash.com/photo-1532597311687-5c2dc87fff52?w=800',   
+  'dolce': 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800',     
+  'spuntino': 'https://images.unsplash.com/photo-1600271801401-65fe5f623a9a?w=800', 
+  'default': 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=800'    
+};
+
 export default function RecipesScreen() {
   const params = useLocalSearchParams();
   const router = useRouter();
@@ -98,6 +108,10 @@ export default function RecipesScreen() {
       return; 
     }
 
+    
+    const catLow = form.categoria.toLowerCase().trim();
+    const selectedImg = CATEGORY_IMAGES[catLow] || CATEGORY_IMAGES.default;
+
     const recipeData = {
       id: editingRecipe ? editingRecipe.id : Date.now().toString(),
       nome: form.nome,
@@ -109,7 +123,7 @@ export default function RecipesScreen() {
       procedimento: form.procedimento,
       note: form.note,
       ingredienti: form.ingredienti,
-      immagine: editingRecipe?.immagine || 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=500'
+      immagine: selectedImg 
     };
 
     if (editingRecipe) updateRecipe(recipeData);
@@ -242,8 +256,15 @@ export default function RecipesScreen() {
           <ScrollView style={styles.modalBody}>
             <Text style={styles.label}>NOME *</Text>
             <TextInput style={styles.input} value={form.nome} onChangeText={t => setForm({...form, nome: t})} />
+            
             <Text style={styles.label}>CATEGORIA *</Text>
-            <TextInput style={styles.input} value={form.categoria} onChangeText={t => setForm({...form, categoria: t})} />
+            <TextInput 
+              style={[styles.input, { borderColor: '#2f95dc', borderWidth: 1 }]} 
+              value={form.categoria} 
+              onChangeText={t => setForm({...form, categoria: t})} 
+              placeholder="Scrivi esatto: antipasto, primo, secondo, dolce o spuntino"
+            />
+            
             <View style={styles.row}>
               <View style={{flex:1}}>
                 <Text style={styles.label}>MINUTI *</Text>
@@ -271,8 +292,10 @@ export default function RecipesScreen() {
             <TouchableOpacity onPress={() => setForm({...form, ingredienti: [...form.ingredienti, {nome:'', qta:''}]})}>
               <Text style={styles.addBtn}>+ AGGIUNGI INGREDIENTE</Text>
             </TouchableOpacity>
+            
             <Text style={styles.label}>PROCEDIMENTO *</Text>
             <TextInput style={[styles.input, {height: 100}]} multiline value={form.procedimento} onChangeText={t => setForm({...form, procedimento: t})} />
+            
             <TouchableOpacity onPress={handleSave} style={styles.btnSave}>
               <Text style={styles.btnSaveText}>SALVA</Text>
             </TouchableOpacity>
@@ -344,61 +367,14 @@ const styles = StyleSheet.create({
   addBtn: { color: '#2f95dc', fontWeight: 'bold', marginBottom: 15 },
   btnSave: { backgroundColor: '#2f95dc', padding: 20, borderRadius: 15, alignItems: 'center', marginTop: 25 },
   btnSaveText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20
-  },
-  confirmBox: {
-    width: '100%',
-    backgroundColor: '#fff',
-    borderRadius: 25,
-    padding: 25,
-    alignItems: 'center',
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10
-  },
-  confirmTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginTop: 15,
-    color: '#1e293b'
-  },
-  confirmSub: {
-    fontSize: 14,
-    color: '#64748b',
-    textAlign: 'center',
-    marginTop: 5,
-    marginBottom: 25
-  },
-  confirmButtons: {
-    flexDirection: 'row',
-    gap: 12,
-    width: '100%'
-  },
-  confirmBtn: {
-    flex: 1,
-    paddingVertical: 15,
-    borderRadius: 12,
-    alignItems: 'center'
-  },
-  cancelBtn: {
-    backgroundColor: '#f1f5f9'
-  },
-  deleteBtn: {
-    backgroundColor: '#ef4444'
-  },
-  cancelBtnText: {
-    color: '#64748b',
-    fontWeight: '600'
-  },
-  deleteBtnText: {
-    color: '#fff',
-    fontWeight: 'bold'
-  }
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  confirmBox: { width: '100%', backgroundColor: '#fff', borderRadius: 25, padding: 25, alignItems: 'center', elevation: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.3, shadowRadius: 10 },
+  confirmTitle: { fontSize: 20, fontWeight: 'bold', marginTop: 15, color: '#1e293b' },
+  confirmSub: { fontSize: 14, color: '#64748b', textAlign: 'center', marginTop: 5, marginBottom: 25 },
+  confirmButtons: { flexDirection: 'row', gap: 12, width: '100%' },
+  confirmBtn: { flex: 1, paddingVertical: 15, borderRadius: 12, alignItems: 'center' },
+  cancelBtn: { backgroundColor: '#f1f5f9' },
+  deleteBtn: { backgroundColor: '#ef4444' },
+  cancelBtnText: { color: '#64748b', fontWeight: '600' },
+  deleteBtnText: { color: '#fff', fontWeight: 'bold' }
 });
