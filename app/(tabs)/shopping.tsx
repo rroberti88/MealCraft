@@ -19,6 +19,7 @@ import { useAppContext } from '../context/AppContext';
 
 const CATEGORIES = ['Bibite', 'Carboidrati', 'Proteine', 'Snack&Dolci', 'Frutta&Verdura', 'Altro'];
 const UNITS = ['pz', 'kg', 'g', 'l', 'ml'];
+
 const CATEGORY_COLORS: { [key: string]: string } = {
   'Bibite': '#60a5fa', 
   'Carboidrati': '#fbbf24', 
@@ -26,6 +27,16 @@ const CATEGORY_COLORS: { [key: string]: string } = {
   'Snack&Dolci': '#c084fc', 
   'Frutta&Verdura': '#34d399', 
   'Altro': '#94a3b8'
+};
+
+// Mappatura dei placeholder per il nome prodotto
+const CATEGORY_PLACEHOLDERS: { [key: string]: string } = {
+  'Bibite': 'es. Acqua, Aranciata...',
+  'Carboidrati': 'es. Pasta, Pane, Riso...',
+  'Proteine': 'es. Pollo, Uova, Tonno...',
+  'Snack&Dolci': 'es. Biscotti, Cornetti...',
+  'Frutta&Verdura': 'es. Mele, Carote...',
+  'Altro': 'Nome del prodotto...'
 };
 
 export default function ShoppingScreen() {
@@ -166,7 +177,6 @@ export default function ShoppingScreen() {
     }));
   };
 
-  
   const triggerDeleteRequest = (section: string, item: any) => {
     setItemToDelete({ section, id: item.id, nome: item.nome });
     setIsDeleteModalVisible(true);
@@ -201,7 +211,15 @@ export default function ShoppingScreen() {
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
         <View style={styles.inputCard}>
           <Text style={styles.inputTitle}>Cosa manca?</Text>
-          <TextInput style={styles.input} placeholder="Nome prodotto (es. Pasta)" value={productName} onChangeText={setProductName} />
+          
+          <TextInput 
+            style={styles.input} 
+            placeholder={CATEGORY_PLACEHOLDERS[selectedCat]} // Placeholder Dinamico
+            placeholderTextColor="#94a3b8"
+            value={productName} 
+            onChangeText={setProductName} 
+          />
+
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
             {CATEGORIES.map(cat => (
               <TouchableOpacity key={cat} style={[styles.chip, selectedCat === cat && { backgroundColor: CATEGORY_COLORS[cat] }]} onPress={() => setSelectedCat(cat)}>
@@ -209,9 +227,25 @@ export default function ShoppingScreen() {
               </TouchableOpacity>
             ))}
           </ScrollView>
+
           <View style={styles.row}>
-            <TextInput style={[styles.input, { flex: 0.8, marginBottom: 0 }]} keyboardType="numeric" placeholder="Qta" value={quantity} onChangeText={setQuantity} />
-            <TextInput style={[styles.input, { flex: 1, marginBottom: 0, opacity: unit === 'pz' ? 0.3 : 1 }]} keyboardType="numeric" placeholder="Peso/Vol" value={weight} onChangeText={setWeight} editable={unit !== 'pz'} />
+            <TextInput 
+              style={[styles.input, { flex: 0.8, marginBottom: 0 }]} 
+              keyboardType="numeric" 
+              placeholder="Qta" 
+              placeholderTextColor="#94a3b8"
+              value={quantity} 
+              onChangeText={setQuantity} 
+            />
+            <TextInput 
+              style={[styles.input, { flex: 1, marginBottom: 0, opacity: unit === 'pz' ? 0.3 : 1 }]} 
+              keyboardType="numeric" 
+              placeholder={unit === 'pz' ? "N/A" : "Peso"} // Placeholder Dinamico per unità
+              placeholderTextColor="#94a3b8"
+              value={weight} 
+              onChangeText={setWeight} 
+              editable={unit !== 'pz'} 
+            />
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 2 }}>
               <View style={styles.unitContainer}>
                 {UNITS.map(u => (
@@ -262,15 +296,28 @@ export default function ShoppingScreen() {
           contentContainerStyle={{ paddingBottom: 100 }}
         />
 
-        {}
         <Modal visible={isModalVisible} transparent animationType="fade">
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Conferma Acquisto</Text>
               <Text style={styles.modalSubtitle}>{editingItem?.nome}</Text>
-              <TextInput style={styles.input} keyboardType="numeric" placeholder="Quantità finale" value={finalQty} onChangeText={setFinalQty} />
+              <TextInput 
+                style={styles.input} 
+                keyboardType="numeric" 
+                placeholder="Es: 1" 
+                placeholderTextColor="#94a3b8"
+                value={finalQty} 
+                onChangeText={setFinalQty} 
+              />
               {editingItem?.unita !== 'pz' && (
-                <TextInput style={styles.input} keyboardType="numeric" placeholder={`Peso finale (${editingItem?.unita})`} value={finalWeight} onChangeText={setFinalWeight} />
+                <TextInput 
+                  style={styles.input} 
+                  keyboardType="numeric" 
+                  placeholder={`Peso finale (${editingItem?.unita})`} 
+                  placeholderTextColor="#94a3b8"
+                  value={finalWeight} 
+                  onChangeText={setFinalWeight} 
+                />
               )}
               <View style={styles.expiryToggleRow}>
                 <View style={styles.toggleContainer}>
@@ -282,7 +329,13 @@ export default function ShoppingScreen() {
                   </TouchableOpacity>
                 </View>
               </View>
-              <TextInput style={styles.input} placeholder={expiryMode === 'days' ? "Esempio: 10" : "GG/MM/AAAA"} value={expValue} onChangeText={setExpValue} />
+              <TextInput 
+                style={styles.input} 
+                placeholder={expiryMode === 'days' ? "Es: 10" : "GG/MM/AAAA"} 
+                placeholderTextColor="#94a3b8"
+                value={expValue} 
+                onChangeText={setExpValue} 
+              />
               <View style={[styles.row, { marginTop: 10 }]}>
                 <TouchableOpacity style={[styles.modalBtn, { backgroundColor: '#f1f5f9' }]} onPress={() => setIsModalVisible(false)}>
                   <Text style={{ color: '#64748b', fontWeight: 'bold' }}>Annulla</Text>
@@ -295,7 +348,6 @@ export default function ShoppingScreen() {
           </View>
         </Modal>
 
-        {}
         <Modal visible={isDeleteModalVisible} transparent animationType="slide">
           <View style={styles.modalOverlay}>
             <View style={[styles.modalContent, { borderTopWidth: 5, borderTopColor: '#f87171' }]}>
@@ -335,7 +387,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8fafc' },
   inputCard: { backgroundColor: '#fff', padding: 20, borderBottomLeftRadius: 30, borderBottomRightRadius: 30, elevation: 4 },
   inputTitle: { fontSize: 20, fontWeight: '900', color: '#1e293b', marginBottom: 12 },
-  input: { backgroundColor: '#f1f5f9', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0', marginBottom: 10, fontSize: 15 },
+  input: { backgroundColor: '#f1f5f9', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0', marginBottom: 10, fontSize: 15, color: '#1e293b' },
   row: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: '#f1f5f9', marginRight: 8 },
   chipText: { fontSize: 12, fontWeight: 'bold', color: '#64748b' },

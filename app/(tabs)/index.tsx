@@ -61,7 +61,6 @@ export default function HomeScreen() {
 
   const expiringItems = useMemo(() => {
     const now = new Date();
-   
     const limitDateEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 3, 23, 59, 59).getTime();
 
     return pantry
@@ -432,7 +431,6 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Azioni Rapide */}
         <View style={styles.quickActions}>
           <TouchableOpacity 
             style={styles.actionButton}
@@ -452,10 +450,10 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#f8fafc' },
   container: { padding: 20 },
-  header: { marginTop: 20, marginBottom: 25 },
+  header: { marginTop: 10, marginBottom: 20 }, // Ridotto margine
   headerMainRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
-  welcomeText: { fontSize: 15, color: '#64748b', fontWeight: '500' },
-  mainTitle: { fontSize: 30, fontWeight: 'bold', color: '#1e293b' },
+  welcomeText: { fontSize: 14, color: '#64748b', fontWeight: '500' }, // Leggermente più piccolo
+  mainTitle: { fontSize: 24, fontWeight: 'bold', color: '#1e293b' }, // Ridotto da 30 a 24
   statsGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 25 },
   statCard: {
     backgroundColor: '#fff',
@@ -483,11 +481,33 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 10,
   },
-  toggleContainer: { flexDirection: 'row', backgroundColor: '#e2e8f0', borderRadius: 12, padding: 4 },
-  toggleButton: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 9 },
-  toggleButtonActive: { backgroundColor: '#fff', elevation: 3, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4 },
-  toggleText: { fontSize: 12, fontWeight: '600', color: '#64748b' },
-  toggleTextActive: { color: '#1e293b' },
+  toggleContainer: { 
+    flexDirection: 'row', 
+    backgroundColor: '#e2e8f0', 
+    borderRadius: 10, 
+    padding: 3,
+    alignSelf: 'center'
+  },
+  toggleButton: { 
+    paddingHorizontal: 10, 
+    paddingVertical: 4, 
+    borderRadius: 7 
+  },
+  toggleButtonActive: { 
+    backgroundColor: '#fff', 
+    elevation: 2, 
+    shadowColor: '#000', 
+    shadowOpacity: 0.05, 
+    shadowRadius: 2 
+  },
+  toggleText: { 
+    fontSize: 11, 
+    fontWeight: '600', 
+    color: '#64748b' 
+  },
+  toggleTextActive: { 
+    color: '#1e293b' 
+  },
   todayMealRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderColor: '#f1f5f9' },
   mealBadgeType: { backgroundColor: '#eff6ff', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, width: 85, alignItems: 'center' },
   mealBadgeTypeText: { fontSize: 10, fontWeight: 'bold', color: '#3b82f6' },
@@ -556,7 +576,6 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   actionButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  
   horizontalScrollGap: { gap: 12, paddingRight: 10 },
   horizontalAlertCard: {
     flexDirection: 'row',
