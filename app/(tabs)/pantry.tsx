@@ -20,13 +20,16 @@ import {
 import { useAppContext } from '../context/AppContext';
 
 const CATEGORIES = [
-  { id: 'Bibite', label: 'Bibite', icon: 'wine-outline' },
-  { id: 'Carboidrati', label: 'Carboidrati', icon: 'pizza-outline' },
-  { id: 'Proteine', label: 'Proteine', icon: 'egg-outline' },
-  { id: 'Snack&Dolci', label: 'Snack&Dolci', icon: 'ice-cream-outline' },
-  { id: 'Frutta&Verdura', label: 'Frutta&Verdura', icon: 'leaf-outline' },
-  { id: 'Altro', label: 'Altro', icon: 'ellipsis-horizontal-outline' },
+  { id: 'Ortofrutta', label: 'Ortofrutta', icon: 'leaf-outline', color: '#34C759' },
+  { id: 'Latticini, Salumi e Formaggi', label: 'Latticini e Salumi', icon: 'ice-cream-outline', color: '#FFCC00' },
+  { id: 'Carne e Pesce', label: 'Carne & Pesce', icon: 'restaurant-outline', color: '#FF3B30' },
+  { id: 'Drogheria Alimentare (Secco)', label: 'Secco/Dispensa', icon: 'pizza-outline', color: '#A2845E' },
+  { id: 'Surgelati e Gelati', label: 'Surgelati', icon: 'snow-outline' , color: '#5AC8FA'},
+  { id: 'Bevande', label: 'Bevande', icon: 'wine-outline', color: '#5856D6' },
+  { id: 'Altro', label: 'Altro', icon: 'ellipsis-horizontal-outline', color: '#8E8E93' },
 ];
+
+const UNITS = ['pz', 'kg', 'g', 'l', 'ml'];
 
 type FilterStatus = 'Tutti' | 'Scadenze' | 'Esaurimento' | 'InStato';
 
@@ -257,9 +260,9 @@ export default function PantryScreen() {
             <Text style={[styles.catLabel, selectedCategory === 'Tutte' && styles.activeCatLabel]}>Tutte</Text>
           </TouchableOpacity>
           {CATEGORIES.map(cat => (
-            <TouchableOpacity key={cat.id} style={[styles.catCard, selectedCategory === cat.id && styles.activeCatCard]} onPress={() => setSelectedCategory(cat.id)}>
-              <Ionicons name={cat.icon as any} size={24} color={selectedCategory === cat.id ? '#fff' : '#007AFF'} />
-              <Text style={[styles.catLabel, selectedCategory === cat.id && styles.activeCatLabel]}>{cat.label}</Text>
+            <TouchableOpacity key={cat.id} style={[styles.catCard, selectedCategory === cat.id && { backgroundColor: cat.color }]} onPress={() => setSelectedCategory(cat.id)}>
+              <Ionicons name={cat.icon as any} size={24} color={selectedCategory === cat.id ? '#fff' : cat.color} />
+              <Text style={[styles.catLabel, selectedCategory === cat.id ? {color: '#fff'} : {color: '#333'}]}>{cat.label}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -355,15 +358,27 @@ export default function PantryScreen() {
             <Text style={styles.label}>Categoria *</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 15 }}>
               {CATEGORIES.map(cat => (
-                <TouchableOpacity key={cat.id} style={[styles.chip, newItem.categoria === cat.id && styles.chipActive]} onPress={() => setNewItem({...newItem, categoria: cat.id})}>
-                  <Text style={[styles.chipText, newItem.categoria === cat.id && styles.chipTextActive]}>{cat.label}</Text>
+                <TouchableOpacity key={cat.id} style={[styles.chip, newItem.categoria === cat.id && { backgroundColor: cat.color, borderColor: cat.color }]} onPress={() => setNewItem({...newItem, categoria: cat.id})}>
+                  <Text style={[styles.chipText, newItem.categoria === cat.id && { color: '#fff', fontWeight: 'bold' }]}>{cat.label}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
 
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <TextInput style={[styles.input, { flex: 1 }]} placeholder="Pezzi/Qta *" keyboardType="numeric" value={newItem.quantita} onChangeText={t => setNewItem({...newItem, quantita: t})} />
-              <TextInput style={[styles.input, { flex: 1 }]} placeholder="Unità (pz, kg...)" value={newItem.unitaMisura} onChangeText={t => setNewItem({...newItem, unitaMisura: t})} />
+            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
+              <View style={{ flex: 1 }}>
+                <TextInput style={[styles.input, { marginBottom: 0 }]} placeholder="Pezzi/Qta *" keyboardType="numeric" value={newItem.quantita} onChangeText={t => setNewItem({...newItem, quantita: t})} />
+              </View>
+              
+              <View style={{ flex: 1 }}>
+                <TextInput style={[styles.input, { marginBottom: 6 }]} placeholder="Unità (pz, kg...)" value={newItem.unitaMisura} onChangeText={t => setNewItem({...newItem, unitaMisura: t})} />
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4, paddingVertical: 2 }}>
+                  {UNITS.map(unit => (
+                    <TouchableOpacity key={unit} style={[styles.unitChip, newItem.unitaMisura === unit && styles.unitChipActive]} onPress={() => setNewItem({...newItem, unitaMisura: unit})}>
+                      <Text style={[styles.unitChipText, newItem.unitaMisura === unit && styles.unitChipTextActive]}>{unit}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
             </View>
 
             <TextInput style={styles.input} placeholder="Peso/Volume singolo (opzionale)" keyboardType="numeric" value={newItem.pesoEffettivo} onChangeText={t => setNewItem({...newItem, pesoEffettivo: t})} />
@@ -442,9 +457,9 @@ const styles = StyleSheet.create({
   searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F3F6', paddingHorizontal: 15, borderRadius: 15, height: 45 },
   searchInput: { flex: 1, marginLeft: 10 },
   categoryList: { paddingHorizontal: 20, paddingVertical: 15, gap: 12 },
-  catCard: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff', padding: 10, borderRadius: 20, width: 80, height: 85, elevation: 3 },
+  catCard: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff', paddingHorizontal: 6, paddingVertical: 10, borderRadius: 20, width: 95, height: 85, elevation: 3 },
   activeCatCard: { backgroundColor: '#007AFF' },
-  catLabel: { fontSize: 10, fontWeight: 'bold', color: '#666', marginTop: 5 },
+  catLabel: { fontSize: 9, fontWeight: 'bold', color: '#666', marginTop: 5, textAlign: 'center' },
   activeCatLabel: { color: '#fff' },
   statusRowContainer: { marginBottom: 15 },
   statusRow: { paddingHorizontal: 20, gap: 8 },
@@ -469,6 +484,10 @@ const styles = StyleSheet.create({
   chipActive: { backgroundColor: '#007AFF', borderColor: '#007AFF' },
   chipText: { fontSize: 12, color: '#333' },
   chipTextActive: { color: '#fff', fontWeight: 'bold' },
+  unitChip: { paddingVertical: 4, paddingHorizontal: 8, borderRadius: 6, backgroundColor: '#F1F3F6', borderWidth: 1, borderColor: '#DDD' },
+  unitChipActive: { backgroundColor: '#007AFF', borderColor: '#007AFF' },
+  unitChipText: { fontSize: 11, color: '#333' },
+  unitChipTextActive: { color: '#fff', fontWeight: 'bold' },
   btn: { flex: 1, padding: 16, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   btnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   alertContainer: { backgroundColor: '#fff', width: '85%', borderRadius: 30, padding: 25, alignItems: 'center', borderTopWidth: 8 },

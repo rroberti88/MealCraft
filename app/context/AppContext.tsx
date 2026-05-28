@@ -271,41 +271,63 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  
   const updatePlan = (date: string, mealType: string, item: any) => {
     const newItem = {
       ...item,
       instanceId: Date.now().toString() + Math.random().toString(36).substr(2, 9)
     };
-
+  
+    if (item.ingredienti && Array.isArray(item.ingredienti)) {
+      const ingredientiMancanti: string[] = [];
+  
+      item.ingredienti.forEach((ing: any) => {
+        const grammiNecessari = estraiNumeroGrammi(ing.qta);
+        
+        const lottiInDispensa = pantry.filter(
+          i => i.nome.toLowerCase().trim() === ing.nome.toLowerCase().trim()
+        );
+  
+        const grammiTotaliDispensa = lottiInDispensa.reduce((acc, lotto) => {
+          const pesoLotto = parseFloat(lotto.pesoEffettivo) || 0;
+          return acc + (pesoLotto > 0 ? (lotto.quantita * pesoLotto) : lotto.quantita);
+        }, 0);
+  
+        if (grammiTotaliDispensa < grammiNecessari) {
+          ingredientiMancanti.push(ing.nome.trim());
+        }
+      });
+  
+      if (ingredientiMancanti.length > 0) {
+        addToShoppingList(ingredientiMancanti);
+      }
+    }
+  
     try {
       const dataDelPasto = new Date(date.replace(/-/g, '/'));
       const dataOdierna = new Date();
-
       dataDelPasto.setHours(0, 0, 0, 0);
       dataOdierna.setHours(0, 0, 0, 0);
-
+  
       if (dataDelPasto.getTime() < dataOdierna.getTime()) {
         setPantry(prevPantry => {
           let nuovaDispensa = [...prevPantry];
-          
           if (item.ingredienti && Array.isArray(item.ingredienti)) {
             item.ingredienti.forEach((ing: any) => {
               const grammi = estraiNumeroGrammi(ing.qta);
               nuovaDispensa = detraiGrammiDaDispensa(nuovaDispensa, ing.nome, grammi);
             });
-          } 
-          else if (item.pesoEffettivo || item.quantita) {
+          } else if (item.pesoEffettivo || item.quantita) {
             const grammi = parseFloat(item.pesoEffettivo) || item.quantita || 1;
             nuovaDispensa = detraiGrammiDaDispensa(nuovaDispensa, item.nome, grammi);
           }
-          
           return nuovaDispensa;
         });
       }
     } catch (error) {
       console.error("Errore durante il parsing delle date nel planner:", error);
     }
-
+  
     setPlan(prev => {
       const newPlan = { ...prev };
       if (!newPlan[date]) newPlan[date] = {};
