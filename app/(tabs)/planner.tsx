@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Modal,
   Pressable,
@@ -48,6 +48,36 @@ export default function PlannerScreen() {
       }
     }, [params?.selectedItem, params?.item])
   );
+
+ 
+  const calendarMarkedDates = useMemo(() => {
+    const marked: Record<string, any> = {};
+
+    Object.keys(plan).forEach((dateKey) => {
+      const dayPlan = plan[dateKey];
+      if (dayPlan) {
+       
+        const hasMeals = Object.values(dayPlan).some((mealArray) => 
+          Array.isArray(mealArray) && mealArray.length > 0
+        );
+
+        if (hasMeals) {
+          marked[dateKey] = {
+            marked: true,
+            dotColor: '#3b82f6',
+          };
+        }
+      }
+    });
+
+    marked[selectedDate] = {
+      ...marked[selectedDate],
+      selected: true,
+      selectedColor: '#3b82f6',
+    };
+
+    return marked;
+  }, [plan, selectedDate]);
 
   const generateWeekDays = () => {
     const days = [];
@@ -141,6 +171,8 @@ export default function PlannerScreen() {
                               name={!isRecipe ? "basket" : "restaurant"} 
                               size={18} 
                               color="#3b82f6" 
+                              onPointerEnterCapture={undefined} 
+                              onPointerLeaveCapture={undefined} 
                             />
                           </View>
                           <View style={styles.recipeInfo}>
@@ -212,7 +244,7 @@ export default function PlannerScreen() {
             <View style={styles.calendarContainer}>
               <Calendar
                 onDayPress={(day: any) => { setSelectedDate(day.dateString); setShowCalendar(false); }}
-                markedDates={{ [selectedDate]: { selected: true, selectedColor: '#3b82f6' } }}
+                markedDates={calendarMarkedDates}
               />
               <TouchableOpacity onPress={() => setShowCalendar(false)} style={styles.closeCal}>
                 <Text style={{ color: '#3b82f6', fontWeight: 'bold' }}>CHIUDI</Text>
