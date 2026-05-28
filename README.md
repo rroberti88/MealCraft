@@ -1,52 +1,20 @@
-DOCUMENTAZIONE TECNICA DI PROGETTO [link canva] (https://www.canva.com/design/DAG6SQBdxCs/75QlLvunepwRAbDDi1mfRQ/edit)
+# Documentazione di Progetto
 
-# Welcome to your Expo app 👋
+Benvenuto nel repository ufficiale del progetto. L'applicazione è stata sviluppata utilizzando il framework React Native ed Expo, sfruttando il sistema di file-based routing tramite Expo Router.
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+---
 
-## Get started
+## Documentazione Tecnica
+La documentazione completa, comprensiva di analisi dei requisiti, wireframe dell'interfaccia e diagrammi di flusso dei dati (wireflow), è disponibile in formato PDF al seguente link:
 
-1. Install dependencies
+**(./documentation/Documento_di_Progettazione(2).pdf)**
 
-   ```bash
-   npm install
-   ```
+---
 
-2. Start the app
+## Istruzioni per l'Installazione e l'Avvio
 
-   ```bash
-   npx expo start
-   ```
+Per eseguire l'applicazione in ambiente locale, completare i seguenti passaggi all'interno del terminale:
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
+### 1. Installazione delle dipendenze
 ```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+npm install
