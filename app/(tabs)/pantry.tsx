@@ -32,6 +32,7 @@ const CATEGORIES = [
 const UNITS = ['pz', 'kg', 'g', 'l', 'ml'];
 
 type FilterStatus = 'Tutti' | 'Scadenze' | 'Esaurimento' | 'InStato';
+type DateInputMode = 'days' | 'exact';
 
 export default function PantryScreen() {
   const { pantry, setPantry, activePicker, closePicker } = useAppContext();
@@ -45,6 +46,9 @@ export default function PantryScreen() {
   
   const [formVisible, setFormVisible] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [dateMode, setDateMode] = useState<DateInputMode>('days');
+  const [daysInput, setDaysInput] = useState('');
+
   const [customAlert, setCustomAlert] = useState({
     visible: false,
     type: 'success' as 'success' | 'warning' | 'error',
@@ -76,6 +80,16 @@ export default function PantryScreen() {
       const diffTime = expiry.getTime() - today.getTime();
       return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     } catch (e) { return null; }
+  };
+
+  const calculateDateFromDays = (daysStr: string) => {
+    const days = parseInt(daysStr) || 0;
+    const targetDate = new Date();
+    targetDate.setDate(targetDate.getDate() + days);
+    const yyyy = targetDate.getFullYear();
+    const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(targetDate.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   };
 
   const handleSelectItem = (item: any) => {
@@ -117,12 +131,15 @@ export default function PantryScreen() {
 
   const addProductToPantry = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
-  
+    
+    const finalScadenza = dateMode === 'days' ? calculateDateFromDays(daysInput) : newItem.scadenza;
+    const currentProductData = { ...newItem, scadenza: finalScadenza };
+
     if (editingItemId) {
       setPantry(prevPantry => 
         prevPantry.map(item => 
           String(item.id) === String(editingItemId) 
-            ? { ...item, ...newItem, quantita: Number(newItem.quantita) }
+            ? { ...item, ...currentProductData, quantita: Number(currentProductData.quantita) }
             : item
         )
       );
@@ -136,9 +153,9 @@ export default function PantryScreen() {
       });
     } else {
       const product = { 
-        ...newItem, 
+        ...currentProductData, 
         id: Date.now().toString(), 
-        quantita: Number(newItem.quantita),
+        quantita: Number(currentProductData.quantita),
       };
       
       setPantry(prevPantry => {
@@ -172,6 +189,7 @@ export default function PantryScreen() {
     }
   
     setNewItem({ nome: '', categoria: '', quantita: '', unitaMisura: '', pesoEffettivo: '', scadenza: '', note: '' });
+    setDaysInput('');
     setEditingItemId(null);
     setFormVisible(false);
   };
@@ -186,12 +204,24 @@ export default function PantryScreen() {
       scadenza: item.scadenza,
       note: item.note || ''
     });
+    
+    const diff = getDaysDiff(item.scadenza);
+    if (diff !== null && diff >= 0) {
+      setDaysInput(String(diff));
+      setDateMode('days');
+    } else {
+      setDaysInput('');
+      setDateMode('exact');
+    }
+
     setEditingItemId(item.id);
     setFormVisible(true);
   };
 
   const handleSave = () => {
-    if (!newItem.nome || !newItem.quantita || !newItem.scadenza || !newItem.categoria) {
+    const finalScadenza = dateMode === 'days' ? calculateDateFromDays(daysInput) : newItem.scadenza;
+
+    if (!newItem.nome || !newItem.quantita || !finalScadenza || !newItem.categoria || (dateMode === 'days' && !daysInput)) {
       setCustomAlert({
         visible: true,
         type: 'error',
@@ -202,7 +232,7 @@ export default function PantryScreen() {
       return;
     }
 
-    const diff = getDaysDiff(newItem.scadenza);
+    const diff = getDaysDiff(finalScadenza);
     setFormVisible(false);
 
     const azioneTesto = editingItemId ? "modificarlo" : "aggiungerlo";
@@ -252,7 +282,7 @@ export default function PantryScreen() {
           <TextInput 
             style={styles.searchInput} 
             placeholder="Cerca prodotti..." 
-            placeholderTextColor="#666668"
+            placeholderTextColor="#444446"
             value={searchQuery} 
             onChangeText={setSearchQuery} 
           />
@@ -363,7 +393,7 @@ export default function PantryScreen() {
               <TextInput 
                 style={styles.input} 
                 placeholder="Nome prodotto *" 
-                placeholderTextColor="#666668"
+                placeholderTextColor="#444446"
                 value={newItem.nome} 
                 onChangeText={t => setNewItem({...newItem, nome: t})} 
               />
@@ -382,7 +412,7 @@ export default function PantryScreen() {
                   <TextInput 
                     style={[styles.input, { marginBottom: 0 }]} 
                     placeholder="Pezzi/Qta *" 
-                    placeholderTextColor="#666668"
+                    placeholderTextColor="#444446"
                     keyboardType="numeric" 
                     value={newItem.quantita} 
                     onChangeText={t => setNewItem({...newItem, quantita: t})} 
@@ -393,7 +423,7 @@ export default function PantryScreen() {
                   <TextInput 
                     style={[styles.input, { marginBottom: 6 }]} 
                     placeholder="Unità (pz, kg...)" 
-                    placeholderTextColor="#666668"
+                    placeholderTextColor="#444446"
                     value={newItem.unitaMisura} 
                     onChangeText={t => setNewItem({...newItem, unitaMisura: t})} 
                   />
@@ -410,19 +440,45 @@ export default function PantryScreen() {
               <TextInput 
                 style={styles.input} 
                 placeholder="Peso/Volume singolo (opzionale)" 
-                placeholderTextColor="#666668"
+                placeholderTextColor="#444446"
                 keyboardType="numeric" 
                 value={newItem.pesoEffettivo} 
                 onChangeText={t => setNewItem({...newItem, pesoEffettivo: t})} 
               />
               
-              <TextInput 
-                style={styles.input} 
-                placeholder="Scadenza (AAAA-MM-GG) *" 
-                placeholderTextColor="#666668"
-                value={newItem.scadenza} 
-                onChangeText={t => setNewItem({...newItem, scadenza: t})} 
-              />
+              <View style={styles.dateSelectorContainer}>
+                <TouchableOpacity 
+                  style={[styles.dateTab, dateMode === 'days' && styles.dateTabActive]} 
+                  onPress={() => setDateMode('days')}
+                >
+                  <Text style={[styles.dateTabText, dateMode === 'days' && styles.dateTabTextActive]}>+ Giorni</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.dateTab, dateMode === 'exact' && styles.dateTabActive]} 
+                  onPress={() => setDateMode('exact')}
+                >
+                  <Text style={[styles.dateTabText, dateMode === 'exact' && styles.dateTabTextActive]}>Data Esatta</Text>
+                </TouchableOpacity>
+              </View>
+
+              {dateMode === 'days' ? (
+                <TextInput 
+                  style={styles.input} 
+                  placeholder="Giorni rimanenti (es. 10) *" 
+                  placeholderTextColor="#444446"
+                  keyboardType="numeric"
+                  value={daysInput}
+                  onChangeText={setDaysInput}
+                />
+              ) : (
+                <TextInput 
+                  style={styles.input} 
+                  placeholder="Scadenza (AAAA-MM-GG) *" 
+                  placeholderTextColor="#444446"
+                  value={newItem.scadenza} 
+                  onChangeText={t => setNewItem({...newItem, scadenza: t})} 
+                />
+              )}
             </ScrollView>
             
             <View style={styles.modalFooterRow}>
@@ -431,6 +487,7 @@ export default function PantryScreen() {
                 onPress={() => {
                   setFormVisible(false);
                   setEditingItemId(null);
+                  setDaysInput('');
                 }}
               >
                 <Text style={styles.btnText}>Annulla</Text>
@@ -480,6 +537,8 @@ export default function PantryScreen() {
           onPress={() => {
             setEditingItemId(null);
             setNewItem({ nome: '', categoria: '', quantita: '', unitaMisura: '', pesoEffettivo: '', scadenza: '', note: '' });
+            setDaysInput('');
+            setDateMode('days');
             setFormVisible(true);
           }}
         >
@@ -520,13 +579,13 @@ const styles = StyleSheet.create({
   modalFooterRow: { flexDirection: 'row', gap: 12, marginTop: 15, paddingBottom: Platform.OS === 'ios' ? 24 : 16, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#F1F3F6' },
   modalTitle: { fontSize: 22, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
   input: { backgroundColor: '#F1F3F6', padding: 14, borderRadius: 12, marginBottom: 12, fontSize: 16, color: '#000' },
-  label: { fontWeight: 'bold', marginBottom: 10, color: '#666' },
+  label: { fontWeight: 'bold', marginBottom: 10, color: '#666', marginTop: 5 },
   chip: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10, backgroundColor: '#F1F3F6', marginRight: 8, borderWidth: 1, borderColor: '#DDD' },
   chipActive: { backgroundColor: '#007AFF', borderColor: '#007AFF' },
   chipText: { fontSize: 12, color: '#333' },
   chipTextActive: { color: '#fff', fontWeight: 'bold' },
   unitChip: { paddingVertical: 4, paddingHorizontal: 8, borderRadius: 6, backgroundColor: '#F1F3F6', borderWidth: 1, borderColor: '#DDD' },
-  unitChipActive: { backgroundColor: '#007AFF', borderColor: '#007AFF' },
+  unitChipActive: { backgroundColor: '#1C2534', borderColor: '#1C2534' },
   unitChipText: { fontSize: 11, color: '#333' },
   unitChipTextActive: { color: '#fff', fontWeight: 'bold' },
   btn: { flex: 1, padding: 16, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
@@ -535,5 +594,10 @@ const styles = StyleSheet.create({
   alertTitle: { fontSize: 20, fontWeight: '900', marginTop: 15, textAlign: 'center' },
   alertMessage: { fontSize: 16, color: '#444', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
   selectBtn: { backgroundColor: '#007AFF', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, marginTop: 8, flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start' },
-  selectBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 12 }
+  selectBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 12 },
+  dateSelectorContainer: { flexDirection: 'row', gap: 10, marginBottom: 12, marginTop: 8 },
+  dateTab: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 8, backgroundColor: '#E5E5EA', alignItems: 'center', justifyContent: 'center' },
+  dateTabActive: { backgroundColor: '#3A4252' },
+  dateTabText: { fontSize: 14, fontWeight: '600', color: '#1C1C1E' },
+  dateTabTextActive: { color: '#fff' }
 });
