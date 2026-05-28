@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useIsFocused } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -8,20 +8,28 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
-  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  Pressable
 } from 'react-native';
 import { useAppContext } from '../context/AppContext';
 
 const RECIPE_CATEGORIES = ['antipasto', 'primo', 'secondo', 'dolce', 'spuntino'];
 
-const UNIT_OPTIONS = ['pz', 'kg', 'g', 'l', 'ml'];
+// Mappatura icone e colori per le categorie delle ricette
+const CATEGORY_CONFIG: { [key: string]: { label: string, icon: string, type: 'ionicons' | 'material', color: string } } = {
+  'all': { label: 'Tutte', icon: 'apps-outline', type: 'ionicons', color: '#fff' },
+  'antipasto': { label: 'Antipasti', icon: 'leaf-outline', type: 'ionicons', color: '#10b981' },
+  'primo': { label: 'Primi Piatti', icon: 'noodles', type: 'material', color: '#f59e0b' },
+  'secondo': { label: 'Secondi', icon: 'food-drumstick-outline', type: 'material', color: '#ef4444' },
+  'dolce': { label: 'Dolci', icon: 'cake-variant-outline', type: 'material', color: '#6366f1' },
+  'spuntino': { label: 'Spuntini', icon: 'fast-food-outline', type: 'ionicons', color: '#06b6d4' },
+};
 
 const CATEGORY_IMAGES: { [key: string]: string } = {
   'antipasto': 'https://images.unsplash.com/photo-1541529086526-db283c563270?w=800', 
@@ -36,11 +44,14 @@ const getDifficultyColor = (diff: string) => {
   switch (diff?.toLowerCase()?.trim()) {
     case 'bassa':
     case 'facile':
+    case 'facili':
       return '#10b981';
     case 'media':
+    case 'medie':
       return '#f97316';
     case 'alta':
     case 'difficile':
+    case 'difficili':
       return '#ef4444';
     default:
       return '#64748b';
@@ -52,7 +63,7 @@ export default function RecipesScreen() {
   const router = useRouter();
   const isFocused = useIsFocused();
   
-  const { recipes, pantry = [], addRecipe, updateRecipe, deleteRecipe, activePicker, closePicker } = useAppContext() as any;
+  const { recipes = [], pantry = [], addRecipe, updateRecipe, deleteRecipe, activePicker, closePicker } = useAppContext() as any;
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -61,6 +72,12 @@ export default function RecipesScreen() {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [recipeToDelete, setRecipeToDelete] = useState<string | null>(null);
   
+  // --- STATI PER RICERCA E FILTRI AGGIORNATI ---
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [difficultyFilter, setDifficultyFilter] = useState<'tutti' | 'Bassa' | 'Media' | 'Alta'>('tutti');
+  const [timeFilter, setTimeFilter] = useState<'tutti' | 'breve' | 'medio' | 'lungo'>('tutti');
+
   const isPickerMode = activePicker?.isOpen && activePicker?.target === 'recipes';
   const mealType = activePicker?.mealType;
 
@@ -92,11 +109,7 @@ export default function RecipesScreen() {
         const name = typeof ing === 'string' ? ing : ing.nome;
         if (name && name.trim()) {
           const cleanName = name.trim().toLowerCase();
-          
-          const inPantry = pantry.some(
-            (pItem: any) => pItem?.nome?.trim().toLowerCase() === cleanName
-          );
-          
+          const inPantry = pantry.some((pItem: any) => pItem?.nome?.trim().toLowerCase() === cleanName);
           if (!inPantry) {
             const formattedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
             missingIngredients.push(formattedName);
@@ -131,11 +144,7 @@ export default function RecipesScreen() {
         procedimento: recipe.procedimento, 
         note: recipe.note || '',
         ingredienti: recipe.ingredienti && recipe.ingredienti.length > 0 
-          ? recipe.ingredienti.map((ing: any) => ({
-              nome: ing.nome || '',
-              qta: ing.qta || '',
-              unita: ing.unita || 'pz'
-            }))
+          ? recipe.ingredienti.map((ing: any) => ({ nome: ing.nome || '', qta: ing.qta || '', unita: ing.unita || 'pz' }))
           : [{ nome: '', qta: '', unita: 'pz' }]
       });
     } else {
@@ -187,27 +196,28 @@ export default function RecipesScreen() {
     }
   };
 
-  const updateIng = (index: number, field: 'nome' | 'qta' | 'unita', val: string) => {
-    const n = [...form.ingredienti];
-    n[index] = { ...n[index], [field]: val };
-    setForm({...form, ingredienti: n});
-  };
+  // --- LOGICA DI FILTRAGGIO AGGIORNATA ---
+  const filteredRecipes = recipes.filter((recipe: any) => {
+    const matchesSearch = recipe.nome?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || recipe.categoria?.toLowerCase() === selectedCategory;
+    const matchesDifficulty = difficultyFilter === 'tutti' || recipe.difficolta === difficultyFilter;
+    
+    // Logica intervalli di tempo
+    let matchesTime = true;
+    const minutes = recipe.tempoPreparazione || 0;
+    if (timeFilter === 'breve') matchesTime = minutes < 20;
+    else if (timeFilter === 'medio') matchesTime = minutes >= 20 && minutes <= 40;
+    else if (timeFilter === 'lungo') matchesTime = minutes > 40;
 
-  const removeIng = (index: number) => {
-    if (form.ingredienti.length === 1) {
-      const n = [{ nome: '', qta: '', unita: 'pz' }];
-      setForm({...form, ingredienti: n});
-    } else {
-      const n = form.ingredienti.filter((_, idx) => idx !== index);
-      setForm({...form, ingredienti: n});
-    }
-  };
+    return matchesSearch && matchesCategory && matchesDifficulty && matchesTime;
+  });
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header con titolo adattato alle Ricette */}
       <View style={styles.header}>
         <View style={{ flex: 1, justifyContent: 'center' }}>
-          <Text style={styles.headerTitle}>{isPickerMode ? "Scegli Ricetta" : "Le Mie Ricette"}</Text>
+          <Text style={styles.headerTitle}>{isPickerMode ? "Scegli Ricetta" : "Ricette"}</Text>
           {isPickerMode && (
              <TouchableOpacity onPress={handleCancelSelection} style={{ marginTop: 4 }}>
                 <Text style={styles.cancelSelectionText}>Annulla selezione</Text>
@@ -222,11 +232,154 @@ export default function RecipesScreen() {
         )}
       </View>
 
+      {/* 1. BARRA DI RICERCA */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBar}>
+          <Ionicons name="search-outline" size={20} color="#64748b" style={{ marginRight: 8 }} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Cerca ricette per nome..."
+            placeholderTextColor="#94a3b8"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+      </View>
+
+      {/* 2. CAROSELLO ORIZZONTALE - CATEGORIE RICETTE */}
+      <View style={{ height: 110 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoriesContainer}
+        >
+          {/* Tasto Tutte */}
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={[styles.categoryCard, selectedCategory === 'all' && styles.categoryCardActive]}
+            onPress={() => setSelectedCategory('all')}
+          >
+            <View style={styles.iconWrapper}>
+              <Ionicons name={CATEGORY_CONFIG.all.icon as any} size={26} color={selectedCategory === 'all' ? '#fff' : '#007fff'} />
+            </View>
+            <Text style={[styles.categoryLabel, selectedCategory === 'all' && styles.categoryLabelActive]}>
+              {CATEGORY_CONFIG.all.label}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Elenco Categorie */}
+          {RECIPE_CATEGORIES.map((cat) => {
+            const isSelected = selectedCategory === cat;
+            const config = CATEGORY_CONFIG[cat] || { label: cat, icon: 'restaurant', type: 'ionicons', color: '#64748b' };
+            return (
+              <TouchableOpacity
+                key={cat}
+                activeOpacity={0.8}
+                style={[styles.categoryCard, isSelected && styles.categoryCardActive]}
+                onPress={() => setSelectedCategory(cat)}
+              >
+                <View style={styles.iconWrapper}>
+                  {config.type === 'ionicons' ? (
+                    <Ionicons name={config.icon as any} size={26} color={isSelected ? '#fff' : config.color} />
+                  ) : (
+                    <MaterialCommunityIcons name={config.icon as any} size={26} color={isSelected ? '#fff' : config.color} />
+                  )}
+                </View>
+                <Text style={[styles.categoryLabel, isSelected && styles.categoryLabelActive]} numberOfLines={1}>
+                  {config.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      {/* --- BLOCCO FILTRI RORGANIZZATO IN DUE RIGHE INDIPENDENTI --- */}
+      <View style={styles.doublePillsContainer}>
+        
+        {/* RIGA 1: FILTRO DIFFICOLTÀ */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsRow}>
+          <TouchableOpacity
+            style={[styles.statusPill, difficultyFilter === 'tutti' && styles.statusPillActive]}
+            onPress={() => setDifficultyFilter('tutti')}
+          >
+            <Text style={[styles.statusPillText, difficultyFilter === 'tutti' && styles.statusPillTextActive]}>
+              Tutti (Difficoltà)
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.statusPill, difficultyFilter === 'Bassa' && styles.statusPillActiveState]}
+            onPress={() => setDifficultyFilter('Bassa')}
+          >
+            <Text style={styles.statusPillText}>Facili</Text>
+            <View style={[styles.dot, { backgroundColor: '#10b981' }]} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.statusPill, difficultyFilter === 'Media' && styles.statusPillActiveState]}
+            onPress={() => setDifficultyFilter('Media')}
+          >
+            <Text style={styles.statusPillText}>Medie</Text>
+            <View style={[styles.dot, { backgroundColor: '#f97316' }]} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.statusPill, difficultyFilter === 'Alta' && styles.statusPillActiveState]}
+            onPress={() => setDifficultyFilter('Alta')}
+          >
+            <Text style={styles.statusPillText}>Difficili</Text>
+            <View style={[styles.dot, { backgroundColor: '#ef4444' }]} />
+          </TouchableOpacity>
+        </ScrollView>
+
+        {/* RIGA 2: FILTRO TEMPI (CON BOTTONE TUTTI INDIPENDENTE) */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsRow}>
+          <TouchableOpacity
+            style={[styles.statusPill, timeFilter === 'tutti' && styles.statusPillActive]}
+            onPress={() => setTimeFilter('tutti')}
+          >
+            <Text style={[styles.statusPillText, timeFilter === 'tutti' && styles.statusPillTextActive]}>
+              Tutti (Tempi)
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.statusPill, timeFilter === 'breve' && styles.statusPillActiveState]}
+            onPress={() => setTimeFilter('breve')}
+          >
+            <Text style={styles.statusPillText}>&lt; 20 min ⏱️</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.statusPill, timeFilter === 'medio' && styles.statusPillActiveState]}
+            onPress={() => setTimeFilter('medio')}
+          >
+            <Text style={styles.statusPillText}>20-40 min ⏱️</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.statusPill, timeFilter === 'lungo' && styles.statusPillActiveState]}
+            onPress={() => setTimeFilter('lungo')}
+          >
+            <Text style={styles.statusPillText}>&gt; 40 min ⏱️</Text>
+          </TouchableOpacity>
+        </ScrollView>
+        
+      </View>
+
+      {/* Elenco Principale delle Ricette */}
       <FlatList 
-        data={recipes} 
+        data={filteredRecipes} 
         keyExtractor={(item) => item.id.toString()} 
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Ionicons name="search-outline" size={48} color="#cbd5e1" />
+            <Text style={styles.emptyText}>Nessuna ricetta corrisponde ai filtri impostati.</Text>
+          </View>
+        }
         renderItem={({ item }) => (
           <View style={styles.card}>
             <TouchableOpacity 
@@ -245,7 +398,7 @@ export default function RecipesScreen() {
                     <Ionicons name="restaurant-outline" size={15} color="#64748b" />
                     <Text style={styles.specInlineText}>Difficoltà: </Text>
                     <Text style={[styles.specInlineValue, { color: getDifficultyColor(item.difficolta) }]}>
-                      {item.difficolta || 'Media'}
+                      {item.difficolta === 'Bassa' ? 'Facile' : item.difficolta === 'Media' ? 'Media' : 'Difficile'}
                     </Text>
                   </View>
                   <View style={styles.specInlineItem}>
@@ -319,6 +472,7 @@ export default function RecipesScreen() {
         )} 
       />
       
+      {/* Modale Form Creazione/Modifica */}
       <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet">
         <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
           <View style={styles.modalTop}>
@@ -332,56 +486,40 @@ export default function RecipesScreen() {
             behavior={Platform.OS === "ios" ? "padding" : "height"} 
             style={{flex: 1}}
           >
-            <ScrollView 
-              style={styles.modalBody} 
-              showsVerticalScrollIndicator={false}
-              automaticallyAdjustKeyboardInsets={true}
-            >
+            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
               <Text style={styles.label}>NOME *</Text>
               <TextInput style={styles.input} value={form.nome} onChangeText={t => setForm({...form, nome: t})} placeholder="Es. Pasta alla carbonara" />
               
               <Text style={styles.label}>CATEGORIA *</Text>
-              <View style={{ marginBottom: 4 }}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesChipsContainer}>
-                  {RECIPE_CATEGORIES.map(cat => {
-                    const isSelected = form.categoria === cat;
-                    return (
-                      <TouchableOpacity 
-                        key={cat} 
-                        activeOpacity={0.8}
-                        style={[styles.categoryChip, isSelected && styles.categoryChipActive]} 
-                        onPress={() => setForm({...form, categoria: cat})}
-                      >
-                        <Text style={[styles.categoryChipText, isSelected && styles.categoryChipTextActive]}>
-                          {cat.toUpperCase()}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesChipsContainer}>
+                {RECIPE_CATEGORIES.map(cat => (
+                  <TouchableOpacity 
+                    key={cat} 
+                    style={[styles.categoryChip, form.categoria === cat && styles.categoryChipActive]} 
+                    onPress={() => setForm({...form, categoria: cat})}
+                  >
+                    <Text style={[styles.categoryChipText, form.categoria === cat && styles.categoryChipTextActive]}>
+                      {cat.toUpperCase()}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
 
               <Text style={styles.label}>DIFFICOLTÀ *</Text>
               <View style={styles.difficultyContainer}>
-                {(['Bassa', 'Media', 'Alta'] as const).map(diff => {
-                  const isSelected = form.difficolta === diff;
-                  return (
-                    <TouchableOpacity
-                      key={diff}
-                      style={[
-                        styles.diffBtn,
-                        isSelected && { backgroundColor: getDifficultyColor(diff), borderColor: 'transparent' }
-                      ]}
-                      onPress={() => setForm({ ...form, difficolta: diff })}
-                    >
-                      <Text style={[styles.diffBtnText, isSelected && { color: '#fff' }]}>
-                        {diff.toUpperCase()}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
+                {(['Bassa', 'Media', 'Alta'] as const).map(diff => (
+                  <TouchableOpacity
+                    key={diff}
+                    style={[styles.diffBtn, form.difficolta === diff && { backgroundColor: getDifficultyColor(diff), borderColor: 'transparent' }]}
+                    onPress={() => setForm({ ...form, difficolta: diff })}
+                  >
+                    <Text style={[styles.diffBtnText, form.difficolta === diff && { color: '#fff' }]}>
+                      {diff === 'Bassa' ? 'FACILE' : diff === 'Media' ? 'MEDIA' : 'DIFFICILE'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
-              
+
               <View style={styles.row}>
                 <View style={{flex:1}}>
                   <Text style={styles.label}>MINUTI *</Text>
@@ -392,134 +530,127 @@ export default function RecipesScreen() {
                   <TextInput style={styles.input} keyboardType="numeric" value={form.porzioni} onChangeText={t => setForm({...form, porzioni: t})} placeholder="4" />
                 </View>
               </View>
-            
-              <Text style={styles.label}>DESCRIZIONE</Text>
-              <TextInput style={styles.input} value={form.descrizione} onChangeText={t => setForm({...form, descrizione: t})} placeholder="Breve introduzione" />
 
-              <Text style={styles.label}>NOTE</Text>
-              <TextInput style={styles.input} value={form.note} onChangeText={t => setForm({...form, note: t})} placeholder="Es. Consumare calda" />
-
-              <Text style={styles.label}>INGREDIENTI</Text>
-              {form.ingredienti.map((ing, index) => (
-                <View key={index} style={styles.ingContainer}>
-                  <View style={styles.ingRow}>
-                    <TextInput 
-                      style={[styles.input, {flex: 2.5, marginBottom: 0}]} 
-                      placeholder="Nome ingrediente" 
-                      value={ing.nome} 
-                      onChangeText={t => updateIng(index, 'nome', t)} 
-                    />
-                    <TextInput 
-                      style={[styles.input, {flex: 1.2, marginBottom: 0}]} 
-                      placeholder="Qta" 
-                      value={ing.qta} 
-                      keyboardType="numeric"
-                      onChangeText={t => updateIng(index, 'qta', t)} 
-                    />
-                    
-                    <TouchableOpacity 
-                      onPress={() => removeIng(index)} 
-                      style={styles.removeIngBtn}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons name="trash-outline" size={20} color="#ef4444" />
-                    </TouchableOpacity>
-                  </View>
-                
-                  <View style={styles.unitRow}>
-                    {UNIT_OPTIONS.map(unit => {
-                      const isUnitSelected = (ing.unita || 'pz') === unit;
-                      return (
-                        <TouchableOpacity
-                          key={unit}
-                          activeOpacity={0.8}
-                          style={[styles.unitChip, isUnitSelected && styles.unitChipActive]}
-                          onPress={() => updateIng(index, 'unita', unit)}
-                        >
-                          <Text style={[styles.unitChipText, isUnitSelected && styles.unitChipTextActive]}>
-                            {unit.toUpperCase()}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                </View>
-              ))}
-              
-              <TouchableOpacity style={{ marginTop: 10 }} onPress={() => setForm({...form, ingredienti: [...form.ingredienti, {nome:'', qta:'', unita:'pz'}]})}>
-                <Text style={styles.addBtn}>+ AGGIUNGI INGREDIENTE</Text>
-              </TouchableOpacity>
-              
               <Text style={styles.label}>PROCEDIMENTO *</Text>
               <TextInput 
                 style={[styles.input, {height: 120, textAlignVertical: 'top'}]} 
                 multiline 
                 value={form.procedimento} 
                 onChangeText={t => setForm({...form, procedimento: t})} 
-                placeholder="Descrivi qui i passaggi della ricetta..."
+                placeholder="Passaggi..."
               />
-              
+
               <TouchableOpacity onPress={handleSave} style={styles.btnSave}>
                 <Text style={styles.btnSaveText}>SALVA RICETTA</Text>
               </TouchableOpacity>
-              <View style={{height: 60}} />
             </ScrollView>
           </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
 
-      <Modal
-        transparent={true}
-        visible={deleteModalVisible}
-        animationType="fade"
-        onRequestClose={() => setDeleteModalVisible(false)}
-      >
+      {/* Modale Eliminazione */}
+      <Modal transparent={true} visible={deleteModalVisible} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.confirmBox}>
             <Ionicons name="warning" size={44} color="#ef4444" />
             <Text style={styles.confirmTitle}>Sei sicuro?</Text>
-            <Text style={styles.confirmSub}>Vuoi eliminare questa ricetta? L'azione è irreversibile.</Text>
-            
             <View style={styles.confirmButtons}>
-              <TouchableOpacity 
-                style={[styles.confirmBtn, styles.cancelBtn]} 
-                onPress={() => setDeleteModalVisible(false)}
-              >
+              <TouchableOpacity style={[styles.confirmBtn, styles.cancelBtn]} onPress={() => setDeleteModalVisible(false)}>
                 <Text style={styles.cancelBtnText}>Annulla</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.confirmBtn, styles.deleteBtn]} 
-                onPress={handleConfirmDelete}
-              >
+              <TouchableOpacity style={[styles.confirmBtn, styles.deleteBtn]} onPress={handleConfirmDelete}>
                 <Text style={styles.deleteBtnText}>Elimina</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8fafc' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, paddingVertical: 15 },
-  headerTitle: { fontSize: 26, fontWeight: '800', color: '#1e293b' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 15, paddingBottom: 5 },
+  headerTitle: { fontSize: 24, fontWeight: '800', color: '#000' },
   cancelSelectionText: { color: '#ef4444', fontWeight: '700', fontSize: 14 },
-  card: { backgroundColor: '#fff', borderRadius: 24, marginHorizontal: 15, marginBottom: 18, overflow: 'hidden', elevation: 4, shadowColor: '#00f', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12 },
+  
+  searchContainer: { paddingHorizontal: 16, marginVertical: 12 },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 16,
+    paddingVertical: Platform.OS === 'ios' ? 12 : 8,
+    borderRadius: 16,
+  },
+  searchInput: { flex: 1, fontSize: 15, color: '#1e293b' },
+
+  categoriesContainer: { paddingHorizontal: 16, gap: 12, alignItems: 'center' },
+  categoryCard: {
+    width: 95,
+    height: 90,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  categoryCardActive: {
+    backgroundColor: '#007fff',
+  },
+  iconWrapper: { marginBottom: 8, justifyContent: 'center', alignItems: 'center' },
+  categoryLabel: { fontSize: 11, fontWeight: '700', color: '#1e293b', textAlign: 'center' },
+  categoryLabelActive: { color: '#fff' },
+
+  // Stili per il nuovo layout a doppia riga di pillole
+  doublePillsContainer: {
+    paddingHorizontal: 16,
+    gap: 10,
+    marginBottom: 16,
+  },
+  pillsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    height: 42,
+  },
+  statusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#e2e8f0',
+    paddingHorizontal: 14,
+    height: 36,
+    borderRadius: 18,
+    gap: 6,
+  },
+  statusPillActive: {
+    backgroundColor: '#007fff',
+  },
+  statusPillActiveState: {
+    backgroundColor: '#cbd5e1',
+    borderWidth: 1,
+    borderColor: '#94a3b8'
+  },
+  statusPillText: { fontSize: 13, fontWeight: '700', color: '#475569' },
+  statusPillTextActive: { color: '#fff' },
+  dot: { width: 10, height: 10, borderRadius: 5 },
+
+  card: { backgroundColor: '#fff', borderRadius: 24, marginHorizontal: 15, marginBottom: 18, overflow: 'hidden', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12 },
   cardImg: { width: '100%', height: 170 },
   cardContent: { padding: 16 },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 },
   title: { fontSize: 19, fontWeight: '800', color: '#1e293b', flex: 1 },
   catBadge: { backgroundColor: '#f1f5f9', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, fontSize: 11, fontWeight: '800', color: '#64748b', overflow: 'hidden', letterSpacing: 0.5 },
-  
   specsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 10, borderTopWidth: 1, borderTopColor: '#f1f5f9', paddingTop: 10 },
   specInlineItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   specInlineText: { fontSize: 13, color: '#64748b', fontWeight: '500' },
   specInlineValue: { fontSize: 13, fontWeight: '700', color: '#334155' },
-
   selectBtn: { backgroundColor: '#10b981', padding: 12, borderRadius: 12, marginTop: 15, alignItems: 'center' },
   selectBtnText: { color: '#fff', fontWeight: 'bold', letterSpacing: 0.5 },
   details: { padding: 16, borderTopWidth: 1, borderColor: '#f1f5f9', backgroundColor: '#fafafa' },
@@ -533,39 +664,38 @@ const styles = StyleSheet.create({
   label: { fontSize: 11, fontWeight: 'bold', color: '#94a3b8', marginTop: 16, marginBottom: 6, letterSpacing: 0.5 },
   input: { backgroundColor: '#f8fafc', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#e2e8f0', marginBottom: 12, fontSize: 15, color: '#1e293b' },
   row: { flexDirection: 'row', gap: 12 },
-  
-  ingContainer: { backgroundColor: '#f8fafc', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0', marginBottom: 10 },
-  ingRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  removeIngBtn: { padding: 8, justifyContent: 'center', alignItems: 'center' },
-  
-  unitRow: { flexDirection: 'row', gap: 6, marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#e2e8f0' },
-  unitChip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, backgroundColor: '#fff', borderWidth: 1, borderColor: '#cbd5e1' },
-  unitChipActive: { backgroundColor: '#2f95dc', borderColor: '#2f95dc' },
-  unitChipText: { fontSize: 11, fontWeight: '700', color: '#64748b' },
-  unitChipTextActive: { color: '#fff' },
-
-  addBtn: { color: '#2f95dc', fontWeight: 'bold', fontSize: 14 },
-  btnSave: { backgroundColor: '#2f95dc', padding: 16, borderRadius: 14, alignItems: 'center', marginTop: 25 },
-  btnSaveText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  
   categoriesChipsContainer: { paddingVertical: 4, gap: 8 },
   categoryChip: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10, backgroundColor: '#f1f5f9', borderWidth: 1, borderColor: '#e2e8f0' },
   categoryChipActive: { backgroundColor: '#2f95dc', borderColor: '#2f95dc' },
   categoryChipText: { fontSize: 12, fontWeight: '700', color: '#64748b' },
   categoryChipTextActive: { color: '#fff' },
-
   difficultyContainer: { flexDirection: 'row', gap: 8, marginBottom: 4 },
   diffBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: '#e2e8f0', backgroundColor: '#f1f5f9', alignItems: 'center' },
   diffBtnText: { fontSize: 12, fontWeight: '700', color: '#64748b' },
-
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
-  confirmBox: { width: '100%', maxWidth: 340, backgroundColor: '#fff', borderRadius: 24, padding: 24, alignItems: 'center', elevation: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 10 },
+  confirmBox: { width: '100%', maxWidth: 340, backgroundColor: '#fff', borderRadius: 24, padding: 24, alignItems: 'center' },
   confirmTitle: { fontSize: 20, fontWeight: 'bold', marginTop: 12, color: '#1e293b' },
-  confirmSub: { fontSize: 14, color: '#64748b', textAlign: 'center', marginTop: 6, marginBottom: 24, lineHeight: 20 },
-  confirmButtons: { flexDirection: 'row', gap: 12, width: '100%' },
+  confirmButtons: { flexDirection: 'row', gap: 12, width: '100%', marginTop: 20 },
   confirmBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
   cancelBtn: { backgroundColor: '#f1f5f9' },
   deleteBtn: { backgroundColor: '#ef4444' },
   cancelBtnText: { color: '#64748b', fontWeight: '600' },
-  deleteBtnText: { color: '#fff', fontWeight: 'bold' }
+  deleteBtnText: { color: '#fff', fontWeight: 'bold' },
+  emptyContainer: { alignItems: 'center', padding: 40, gap: 8 },
+  emptyText: { color: '#64748b', textAlign: 'center', fontSize: 14 },
+  
+  btnSave: {
+    backgroundColor: '#007fff',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 20,
+  },
+  btnSaveText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
 });
