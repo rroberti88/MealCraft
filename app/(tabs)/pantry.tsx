@@ -252,7 +252,7 @@ export default function PantryScreen() {
           <TextInput 
             style={styles.searchInput} 
             placeholder="Cerca prodotti..." 
-            placeholderTextColor="#767680"
+            placeholderTextColor="#666668"
             value={searchQuery} 
             onChangeText={setSearchQuery} 
           />
@@ -355,7 +355,7 @@ export default function PantryScreen() {
       <Modal visible={formVisible} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalContent}>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.modalScrollBody}>
+            <ScrollView showsVerticalScrollIndicator={false} automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}>
               <Text style={styles.modalTitle}>
                 {editingItemId ? "Modifica Prodotto" : "Nuovo Ingrediente"}
               </Text>
@@ -363,7 +363,7 @@ export default function PantryScreen() {
               <TextInput 
                 style={styles.input} 
                 placeholder="Nome prodotto *" 
-                placeholderTextColor="#767680"
+                placeholderTextColor="#666668"
                 value={newItem.nome} 
                 onChangeText={t => setNewItem({...newItem, nome: t})} 
               />
@@ -382,7 +382,7 @@ export default function PantryScreen() {
                   <TextInput 
                     style={[styles.input, { marginBottom: 0 }]} 
                     placeholder="Pezzi/Qta *" 
-                    placeholderTextColor="#767680"
+                    placeholderTextColor="#666668"
                     keyboardType="numeric" 
                     value={newItem.quantita} 
                     onChangeText={t => setNewItem({...newItem, quantita: t})} 
@@ -393,7 +393,7 @@ export default function PantryScreen() {
                   <TextInput 
                     style={[styles.input, { marginBottom: 6 }]} 
                     placeholder="Unità (pz, kg...)" 
-                    placeholderTextColor="#767680"
+                    placeholderTextColor="#666668"
                     value={newItem.unitaMisura} 
                     onChangeText={t => setNewItem({...newItem, unitaMisura: t})} 
                   />
@@ -410,7 +410,7 @@ export default function PantryScreen() {
               <TextInput 
                 style={styles.input} 
                 placeholder="Peso/Volume singolo (opzionale)" 
-                placeholderTextColor="#767680"
+                placeholderTextColor="#666668"
                 keyboardType="numeric" 
                 value={newItem.pesoEffettivo} 
                 onChangeText={t => setNewItem({...newItem, pesoEffettivo: t})} 
@@ -419,7 +419,7 @@ export default function PantryScreen() {
               <TextInput 
                 style={styles.input} 
                 placeholder="Scadenza (AAAA-MM-GG) *" 
-                placeholderTextColor="#767680"
+                placeholderTextColor="#666668"
                 value={newItem.scadenza} 
                 onChangeText={t => setNewItem({...newItem, scadenza: t})} 
               />
@@ -492,7 +492,7 @@ export default function PantryScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8F9FB' },
-  topSection: { padding: 20, backgroundColor: '#fff', borderBottomLeftRadius: 30, borderBottomRightRadius: 30, elevation: 5, paddingTop: Platform.OS === 'ios' ? 20 : 50 },
+  topSection: { padding: 20, backgroundColor: '#fff', borderBottomLeftRadius: 30, borderBottomRightRadius: 30, elevation: 5, paddingTop: Platform.OS === 'ios' ? 60 : 40 },
   headerTitle: { fontSize: 24, fontWeight: 'bold', marginBottom: 15 },
   searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F3F6', paddingHorizontal: 15, borderRadius: 15, height: 45 },
   searchInput: { flex: 1, marginLeft: 10, color: '#000' },
@@ -516,9 +516,8 @@ const styles = StyleSheet.create({
   itemExpiry: { fontSize: 12, fontWeight: '600', color: '#666' },
   fab: { position: 'absolute', bottom: 30, right: 25, backgroundColor: '#007AFF', width: 65, height: 65, borderRadius: 32.5, justifyContent: 'center', alignItems: 'center', elevation: 10 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 16 },
-  modalContent: { backgroundColor: '#fff', borderRadius: 25, width: '100%', maxHeight: '85%', paddingHorizontal: 20, paddingTop: 20, paddingBottom: Platform.OS === 'ios' ? 24 : 20, overflow: 'hidden' },
-  modalScrollBody: { paddingBottom: 10 },
-  modalFooterRow: { flexDirection: 'row', gap: 12, marginTop: 15, borderTopWidth: 1, borderTopColor: '#E5E5EA', paddingTop: 15 },
+  modalContent: { backgroundColor: '#fff', borderRadius: 25, paddingHorizontal: 22, paddingTop: 24, width: '100%', maxHeight: '90%', justifyContent: 'space-between' },
+  modalFooterRow: { flexDirection: 'row', gap: 12, marginTop: 15, paddingBottom: Platform.OS === 'ios' ? 24 : 16, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#F1F3F6' },
   modalTitle: { fontSize: 22, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
   input: { backgroundColor: '#F1F3F6', padding: 14, borderRadius: 12, marginBottom: 12, fontSize: 16, color: '#000' },
   label: { fontWeight: 'bold', marginBottom: 10, color: '#666' },
@@ -530,9 +529,9 @@ const styles = StyleSheet.create({
   unitChipActive: { backgroundColor: '#007AFF', borderColor: '#007AFF' },
   unitChipText: { fontSize: 11, color: '#333' },
   unitChipTextActive: { color: '#fff', fontWeight: 'bold' },
-  btn: { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', justifyContent: 'center', minHeight: 48 },
+  btn: { flex: 1, padding: 16, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   btnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  alertContainer: { backgroundColor: '#fff', width: '90%', borderRadius: 30, padding: 24, alignItems: 'center', borderTopWidth: 8 },
+  alertContainer: { backgroundColor: '#fff', width: '85%', borderRadius: 30, padding: 25, alignItems: 'center', borderTopWidth: 8 },
   alertTitle: { fontSize: 20, fontWeight: '900', marginTop: 15, textAlign: 'center' },
   alertMessage: { fontSize: 16, color: '#444', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
   selectBtn: { backgroundColor: '#007AFF', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, marginTop: 8, flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start' },
