@@ -7,7 +7,7 @@ Benvenuto nel repository ufficiale del progetto. L'applicazione è stata svilupp
 ## Documentazione Tecnica
 La documentazione completa, comprensiva di analisi dei requisiti, wireframe dell'interfaccia e diagrammi di flusso dei dati (wireflow), è disponibile in formato PDF al seguente link:
 
-**(./documentation/Documento_di_Progettazione(2).pdf)**
+**[Scarica la Documentazione Tecnica (PDF)](./documentation/Documento_di_Progettazione(2).pdf)**
 
 ---
 
