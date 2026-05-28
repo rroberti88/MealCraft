@@ -8,20 +8,19 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
+  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-  Pressable
+  View
 } from 'react-native';
 import { useAppContext } from '../context/AppContext';
 
 const RECIPE_CATEGORIES = ['antipasto', 'primo', 'secondo', 'dolce', 'spuntino'];
 
-// Mappatura icone e colori per le categorie delle ricette
 const CATEGORY_CONFIG: { [key: string]: { label: string, icon: string, type: 'ionicons' | 'material', color: string } } = {
   'all': { label: 'Tutte', icon: 'apps-outline', type: 'ionicons', color: '#fff' },
   'antipasto': { label: 'Antipasti', icon: 'leaf-outline', type: 'ionicons', color: '#10b981' },
@@ -63,7 +62,7 @@ export default function RecipesScreen() {
   const router = useRouter();
   const isFocused = useIsFocused();
   
-  const { recipes = [], pantry = [], addRecipe, updateRecipe, deleteRecipe, activePicker, closePicker } = useAppContext() as any;
+  const { recipes = [], pantry = [], addRecipe, updateRecipe, deleteRecipe, activePicker, closePicker } = useAppContext();
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -72,10 +71,9 @@ export default function RecipesScreen() {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [recipeToDelete, setRecipeToDelete] = useState<string | null>(null);
   
-  // --- STATI PER RICERCA E FILTRI AGGIORNATI ---
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [difficultyFilter, setDifficultyFilter] = useState<'tutti' | 'Bassa' | 'Media' | 'Alta'>('tutti');
+  const [difficultyFilter, setDifficultyFilter] = useState<string>('tutti');
   const [timeFilter, setTimeFilter] = useState<'tutti' | 'breve' | 'medio' | 'lungo'>('tutti');
 
   const isPickerMode = activePicker?.isOpen && activePicker?.target === 'recipes';
@@ -91,7 +89,7 @@ export default function RecipesScreen() {
 
   const [form, setForm] = useState({
     nome: '', descrizione: '', categoria: 'primo', tempo: '', porzioni: '', 
-    difficolta: 'Media' as 'Bassa' | 'Media' | 'Alta', 
+    difficolta: 'Media', 
     procedimento: '', note: '',
     ingredienti: [{ nome: '', qta: '', unita: 'pz' }]
   });
@@ -141,7 +139,7 @@ export default function RecipesScreen() {
         tempo: (recipe.tempoPreparazione || '').toString(), 
         difficolta: recipe.difficolta || 'Media',
         porzioni: (recipe.porzioni || '').toString(), 
-        procedimento: recipe.procedimento, 
+        procedimento: Array.isArray(recipe.procedimento) ? recipe.procedimento.join('\n') : recipe.procedimento, 
         note: recipe.note || '',
         ingredienti: recipe.ingredienti && recipe.ingredienti.length > 0 
           ? recipe.ingredienti.map((ing: any) => ({ nome: ing.nome || '', qta: ing.qta || '', unita: ing.unita || 'pz' }))
@@ -183,7 +181,7 @@ export default function RecipesScreen() {
   };
 
   const openDeleteConfirm = (id: any) => {
-    setRecipeToDelete(id);
+    setRecipeToDelete(String(id));
     setDeleteModalVisible(true);
   };
 
@@ -196,13 +194,17 @@ export default function RecipesScreen() {
     }
   };
 
-  // --- LOGICA DI FILTRAGGIO AGGIORNATA ---
   const filteredRecipes = recipes.filter((recipe: any) => {
     const matchesSearch = recipe.nome?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || recipe.categoria?.toLowerCase() === selectedCategory;
-    const matchesDifficulty = difficultyFilter === 'tutti' || recipe.difficolta === difficultyFilter;
     
-    // Logica intervalli di tempo
+    const recipeDiff = recipe.difficolta?.toLowerCase()?.trim();
+    const filterDiff = difficultyFilter?.toLowerCase()?.trim();
+    const matchesDifficulty = difficultyFilter === 'tutti' || 
+      recipeDiff === filterDiff || 
+      (filterDiff === 'bassa' && recipeDiff === 'facile') ||
+      (filterDiff === 'alta' && recipeDiff === 'difficile');
+    
     let matchesTime = true;
     const minutes = recipe.tempoPreparazione || 0;
     if (timeFilter === 'breve') matchesTime = minutes < 20;
@@ -214,7 +216,6 @@ export default function RecipesScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header con titolo adattato alle Ricette */}
       <View style={styles.header}>
         <View style={{ flex: 1, justifyContent: 'center' }}>
           <Text style={styles.headerTitle}>{isPickerMode ? "Scegli Ricetta" : "Ricette"}</Text>
@@ -232,7 +233,6 @@ export default function RecipesScreen() {
         )}
       </View>
 
-      {/* 1. BARRA DI RICERCA */}
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
           <Ionicons name="search-outline" size={20} color="#64748b" style={{ marginRight: 8 }} />
@@ -246,14 +246,12 @@ export default function RecipesScreen() {
         </View>
       </View>
 
-      {/* 2. CAROSELLO ORIZZONTALE - CATEGORIE RICETTE */}
       <View style={{ height: 110 }}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categoriesContainer}
         >
-          {/* Tasto Tutte */}
           <TouchableOpacity
             activeOpacity={0.8}
             style={[styles.categoryCard, selectedCategory === 'all' && styles.categoryCardActive]}
@@ -267,7 +265,6 @@ export default function RecipesScreen() {
             </Text>
           </TouchableOpacity>
 
-          {/* Elenco Categorie */}
           {RECIPE_CATEGORIES.map((cat) => {
             const isSelected = selectedCategory === cat;
             const config = CATEGORY_CONFIG[cat] || { label: cat, icon: 'restaurant', type: 'ionicons', color: '#64748b' };
@@ -294,10 +291,7 @@ export default function RecipesScreen() {
         </ScrollView>
       </View>
 
-      {/* --- BLOCCO FILTRI RORGANIZZATO IN DUE RIGHE INDIPENDENTI --- */}
       <View style={styles.doublePillsContainer}>
-        
-        {/* RIGA 1: FILTRO DIFFICOLTÀ */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsRow}>
           <TouchableOpacity
             style={[styles.statusPill, difficultyFilter === 'tutti' && styles.statusPillActive]}
@@ -309,7 +303,7 @@ export default function RecipesScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.statusPill, difficultyFilter === 'Bassa' && styles.statusPillActiveState]}
+            style={[styles.statusPill, (difficultyFilter === 'Bassa' || difficultyFilter === 'Facile') && styles.statusPillActiveState]}
             onPress={() => setDifficultyFilter('Bassa')}
           >
             <Text style={styles.statusPillText}>Facili</Text>
@@ -325,7 +319,7 @@ export default function RecipesScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.statusPill, difficultyFilter === 'Alta' && styles.statusPillActiveState]}
+            style={[styles.statusPill, (difficultyFilter === 'Alta' || difficultyFilter === 'Difficile') && styles.statusPillActiveState]}
             onPress={() => setDifficultyFilter('Alta')}
           >
             <Text style={styles.statusPillText}>Difficili</Text>
@@ -333,7 +327,6 @@ export default function RecipesScreen() {
           </TouchableOpacity>
         </ScrollView>
 
-        {/* RIGA 2: FILTRO TEMPI (CON BOTTONE TUTTI INDIPENDENTE) */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsRow}>
           <TouchableOpacity
             style={[styles.statusPill, timeFilter === 'tutti' && styles.statusPillActive]}
@@ -365,13 +358,11 @@ export default function RecipesScreen() {
             <Text style={styles.statusPillText}>&gt; 40 min ⏱️</Text>
           </TouchableOpacity>
         </ScrollView>
-        
       </View>
 
-      {/* Elenco Principale delle Ricette */}
       <FlatList 
         data={filteredRecipes} 
-        keyExtractor={(item) => item.id.toString()} 
+        keyExtractor={(item) => String(item.id)} 
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
@@ -384,7 +375,7 @@ export default function RecipesScreen() {
           <View style={styles.card}>
             <TouchableOpacity 
               activeOpacity={0.8}
-              onPress={() => setSelectedId(selectedId === item.id.toString() ? null : item.id.toString())}
+              onPress={() => setSelectedId(selectedId === String(item.id) ? null : String(item.id))}
             >
               <Image source={{ uri: item.immagine }} style={styles.cardImg} />
               <View style={styles.cardContent}>
@@ -398,7 +389,7 @@ export default function RecipesScreen() {
                     <Ionicons name="restaurant-outline" size={15} color="#64748b" />
                     <Text style={styles.specInlineText}>Difficoltà: </Text>
                     <Text style={[styles.specInlineValue, { color: getDifficultyColor(item.difficolta) }]}>
-                      {item.difficolta === 'Bassa' ? 'Facile' : item.difficolta === 'Media' ? 'Media' : 'Difficile'}
+                      {item.difficolta === 'Bassa' || item.difficolta === 'Facile' || item.difficolta === 'Facili' ? 'Facile' : item.difficolta === 'Media' || item.difficolta === 'Medie' ? 'Media' : 'Difficile'}
                     </Text>
                   </View>
                   <View style={styles.specInlineItem}>
@@ -409,7 +400,7 @@ export default function RecipesScreen() {
                   <View style={styles.specInlineItem}>
                     <Ionicons name="people-outline" size={15} color="#64748b" />
                     <Text style={styles.specInlineText}>Dosi: </Text>
-                    <Text style={styles.specInlineValue}>{item.porzioni || 1} {parseInt(item.porzioni) === 1 ? 'persona' : 'persone'}</Text>
+                    <Text style={styles.specInlineValue}>{item.porzioni || 1} {item.porzioni === 1 ? 'persona' : 'persone'}</Text>
                   </View>
                 </View>
                 
@@ -424,7 +415,7 @@ export default function RecipesScreen() {
               </View>
             </TouchableOpacity>
 
-            {selectedId === item.id.toString() && (
+            {selectedId === String(item.id) && (
               <View style={styles.details}>
                 {item.descrizione ? (
                   <>
@@ -441,7 +432,9 @@ export default function RecipesScreen() {
                 ))}
 
                 <Text style={styles.sub}>Procedimento:</Text>
-                <Text style={styles.txt}>{item.procedimento}</Text>
+                <Text style={styles.txt}>
+                  {Array.isArray(item.procedimento) ? item.procedimento.join('\n') : item.procedimento}
+                </Text>
                 
                 {item.note ? (
                   <>
@@ -472,7 +465,6 @@ export default function RecipesScreen() {
         )} 
       />
       
-      {/* Modale Form Creazione/Modifica */}
       <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet">
         <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
           <View style={styles.modalTop}>
@@ -548,7 +540,6 @@ export default function RecipesScreen() {
         </SafeAreaView>
       </Modal>
 
-      {/* Modale Eliminazione */}
       <Modal transparent={true} visible={deleteModalVisible} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.confirmBox}>
@@ -608,7 +599,6 @@ const styles = StyleSheet.create({
   categoryLabel: { fontSize: 11, fontWeight: '700', color: '#1e293b', textAlign: 'center' },
   categoryLabelActive: { color: '#fff' },
 
-  // Stili per il nuovo layout a doppia riga di pillole
   doublePillsContainer: {
     paddingHorizontal: 16,
     gap: 10,
@@ -683,7 +673,6 @@ const styles = StyleSheet.create({
   deleteBtnText: { color: '#fff', fontWeight: 'bold' },
   emptyContainer: { alignItems: 'center', padding: 40, gap: 8 },
   emptyText: { color: '#64748b', textAlign: 'center', fontSize: 14 },
-  
   btnSave: {
     backgroundColor: '#007fff',
     paddingVertical: 14,

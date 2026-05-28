@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { INITIAL_RECIPES } from '../../constants/recipes';
 
 export interface Recipe {
   id: string;
@@ -7,9 +8,9 @@ export interface Recipe {
   descrizione: string;
   categoria: string;
   tempoPreparazione: number;
-  difficolta: 'Bassa' | 'Media' | 'Alta';
+  difficolta: string;
   porzioni: number;
-  ingredienti: { nome: string; qta: string }[];
+  ingredienti: { nome: string; qta: string; unita:string}[];
   procedimento: string;
   note?: string;
   immagine: string;
@@ -62,7 +63,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [pantry, setPantry] = useState<PantryItem[]>([]);
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [recipes, setRecipes] = useState<Recipe[]>(INITIAL_RECIPES);
   const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([]);
   const [plan, setPlan] = useState<Record<string, any>>({});
   const [isLoaded, setIsLoaded] = useState(false);
@@ -84,7 +85,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         const currentShopping = sShopping ? JSON.parse(sShopping) : [];
         const currentPlan = sPlan ? JSON.parse(sPlan) : {};
 
-        setRecipes(currentRecipes);
+        if (currentRecipes.length > 0) {
+          setRecipes(currentRecipes);
+        } else {
+          setRecipes(INITIAL_RECIPES);
+        }
+        
         setShoppingList(currentShopping);
         setPlan(currentPlan);
 
@@ -147,7 +153,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         const pesoA = parseFloat(a.pesoEffettivo) || 0;
         const pesoB = parseFloat(b.pesoEffettivo) || 0;
 
-       
         if (pesoA !== pesoB && (a.quantita === 1 || b.quantita === 1)) {
           return pesoA - pesoB;
         }
@@ -271,7 +276,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  
   const updatePlan = (date: string, mealType: string, item: any) => {
     const newItem = {
       ...item,
