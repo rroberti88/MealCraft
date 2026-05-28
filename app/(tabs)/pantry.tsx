@@ -248,8 +248,14 @@ export default function PantryScreen() {
         )}
 
         <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#999" />
-          <TextInput style={styles.searchInput} placeholder="Cerca prodotti..." value={searchQuery} onChangeText={setSearchQuery} />
+          <Ionicons name="search" size={20} color="#666" />
+          <TextInput 
+            style={styles.searchInput} 
+            placeholder="Cerca prodotti..." 
+            placeholderTextColor="#767680"
+            value={searchQuery} 
+            onChangeText={setSearchQuery} 
+          />
         </View>
       </View>
 
@@ -349,43 +355,77 @@ export default function PantryScreen() {
       <Modal visible={formVisible} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {editingItemId ? "Modifica Prodotto" : "Nuovo Ingrediente"}
-            </Text>
-            
-            <TextInput style={styles.input} placeholder="Nome prodotto *" value={newItem.nome} onChangeText={t => setNewItem({...newItem, nome: t})} />
-            
-            <Text style={styles.label}>Categoria *</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 15 }}>
-              {CATEGORIES.map(cat => (
-                <TouchableOpacity key={cat.id} style={[styles.chip, newItem.categoria === cat.id && { backgroundColor: cat.color, borderColor: cat.color }]} onPress={() => setNewItem({...newItem, categoria: cat.id})}>
-                  <Text style={[styles.chipText, newItem.categoria === cat.id && { color: '#fff', fontWeight: 'bold' }]}>{cat.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
-            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
-              <View style={{ flex: 1 }}>
-                <TextInput style={[styles.input, { marginBottom: 0 }]} placeholder="Pezzi/Qta *" keyboardType="numeric" value={newItem.quantita} onChangeText={t => setNewItem({...newItem, quantita: t})} />
-              </View>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.modalScrollBody}>
+              <Text style={styles.modalTitle}>
+                {editingItemId ? "Modifica Prodotto" : "Nuovo Ingrediente"}
+              </Text>
               
-              <View style={{ flex: 1 }}>
-                <TextInput style={[styles.input, { marginBottom: 6 }]} placeholder="Unità (pz, kg...)" value={newItem.unitaMisura} onChangeText={t => setNewItem({...newItem, unitaMisura: t})} />
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4, paddingVertical: 2 }}>
-                  {UNITS.map(unit => (
-                    <TouchableOpacity key={unit} style={[styles.unitChip, newItem.unitaMisura === unit && styles.unitChipActive]} onPress={() => setNewItem({...newItem, unitaMisura: unit})}>
-                      <Text style={[styles.unitChipText, newItem.unitaMisura === unit && styles.unitChipTextActive]}>{unit}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            </View>
+              <TextInput 
+                style={styles.input} 
+                placeholder="Nome prodotto *" 
+                placeholderTextColor="#767680"
+                value={newItem.nome} 
+                onChangeText={t => setNewItem({...newItem, nome: t})} 
+              />
+              
+              <Text style={styles.label}>Categoria *</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 15 }}>
+                {CATEGORIES.map(cat => (
+                  <TouchableOpacity key={cat.id} style={[styles.chip, newItem.categoria === cat.id && { backgroundColor: cat.color, borderColor: cat.color }]} onPress={() => setNewItem({...newItem, categoria: cat.id})}>
+                    <Text style={[styles.chipText, newItem.categoria === cat.id && { color: '#fff', fontWeight: 'bold' }]}>{cat.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
 
-            <TextInput style={styles.input} placeholder="Peso/Volume singolo (opzionale)" keyboardType="numeric" value={newItem.pesoEffettivo} onChangeText={t => setNewItem({...newItem, pesoEffettivo: t})} />
+              <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
+                <View style={{ flex: 1 }}>
+                  <TextInput 
+                    style={[styles.input, { marginBottom: 0 }]} 
+                    placeholder="Pezzi/Qta *" 
+                    placeholderTextColor="#767680"
+                    keyboardType="numeric" 
+                    value={newItem.quantita} 
+                    onChangeText={t => setNewItem({...newItem, quantita: t})} 
+                  />
+                </View>
+                
+                <View style={{ flex: 1 }}>
+                  <TextInput 
+                    style={[styles.input, { marginBottom: 6 }]} 
+                    placeholder="Unità (pz, kg...)" 
+                    placeholderTextColor="#767680"
+                    value={newItem.unitaMisura} 
+                    onChangeText={t => setNewItem({...newItem, unitaMisura: t})} 
+                  />
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4, paddingVertical: 2 }}>
+                    {UNITS.map(unit => (
+                      <TouchableOpacity key={unit} style={[styles.unitChip, newItem.unitaMisura === unit && styles.unitChipActive]} onPress={() => setNewItem({...newItem, unitaMisura: unit})}>
+                        <Text style={[styles.unitChipText, newItem.unitaMisura === unit && styles.unitChipTextActive]}>{unit}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              </View>
+
+              <TextInput 
+                style={styles.input} 
+                placeholder="Peso/Volume singolo (opzionale)" 
+                placeholderTextColor="#767680"
+                keyboardType="numeric" 
+                value={newItem.pesoEffettivo} 
+                onChangeText={t => setNewItem({...newItem, pesoEffettivo: t})} 
+              />
+              
+              <TextInput 
+                style={styles.input} 
+                placeholder="Scadenza (AAAA-MM-GG) *" 
+                placeholderTextColor="#767680"
+                value={newItem.scadenza} 
+                onChangeText={t => setNewItem({...newItem, scadenza: t})} 
+              />
+            </ScrollView>
             
-            <TextInput style={styles.input} placeholder="Scadenza (AAAA-MM-GG) *" value={newItem.scadenza} onChangeText={t => setNewItem({...newItem, scadenza: t})} />
-            
-            <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+            <View style={styles.modalFooterRow}>
               <TouchableOpacity 
                 style={[styles.btn, { backgroundColor: '#8E8E93' }]} 
                 onPress={() => {
@@ -452,10 +492,10 @@ export default function PantryScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8F9FB' },
-  topSection: { padding: 20, backgroundColor: '#fff', borderBottomLeftRadius: 30, borderBottomRightRadius: 30, elevation: 5, paddingTop: 60 },
+  topSection: { padding: 20, backgroundColor: '#fff', borderBottomLeftRadius: 30, borderBottomRightRadius: 30, elevation: 5, paddingTop: Platform.OS === 'ios' ? 20 : 50 },
   headerTitle: { fontSize: 24, fontWeight: 'bold', marginBottom: 15 },
   searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F3F6', paddingHorizontal: 15, borderRadius: 15, height: 45 },
-  searchInput: { flex: 1, marginLeft: 10 },
+  searchInput: { flex: 1, marginLeft: 10, color: '#000' },
   categoryList: { paddingHorizontal: 20, paddingVertical: 15, gap: 12 },
   catCard: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff', paddingHorizontal: 6, paddingVertical: 10, borderRadius: 20, width: 95, height: 85, elevation: 3 },
   activeCatCard: { backgroundColor: '#007AFF' },
@@ -475,10 +515,12 @@ const styles = StyleSheet.create({
   itemSub: { color: '#888', marginVertical: 2 },
   itemExpiry: { fontSize: 12, fontWeight: '600', color: '#666' },
   fab: { position: 'absolute', bottom: 30, right: 25, backgroundColor: '#007AFF', width: 65, height: 65, borderRadius: 32.5, justifyContent: 'center', alignItems: 'center', elevation: 10 },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 20 },
-  modalContent: { backgroundColor: '#fff', borderRadius: 25, padding: 25, width: '100%' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 16 },
+  modalContent: { backgroundColor: '#fff', borderRadius: 25, width: '100%', maxHeight: '85%', paddingHorizontal: 20, paddingTop: 20, paddingBottom: Platform.OS === 'ios' ? 24 : 20, overflow: 'hidden' },
+  modalScrollBody: { paddingBottom: 10 },
+  modalFooterRow: { flexDirection: 'row', gap: 12, marginTop: 15, borderTopWidth: 1, borderTopColor: '#E5E5EA', paddingTop: 15 },
   modalTitle: { fontSize: 22, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
-  input: { backgroundColor: '#F1F3F6', padding: 14, borderRadius: 12, marginBottom: 12, fontSize: 16 },
+  input: { backgroundColor: '#F1F3F6', padding: 14, borderRadius: 12, marginBottom: 12, fontSize: 16, color: '#000' },
   label: { fontWeight: 'bold', marginBottom: 10, color: '#666' },
   chip: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10, backgroundColor: '#F1F3F6', marginRight: 8, borderWidth: 1, borderColor: '#DDD' },
   chipActive: { backgroundColor: '#007AFF', borderColor: '#007AFF' },
@@ -488,9 +530,9 @@ const styles = StyleSheet.create({
   unitChipActive: { backgroundColor: '#007AFF', borderColor: '#007AFF' },
   unitChipText: { fontSize: 11, color: '#333' },
   unitChipTextActive: { color: '#fff', fontWeight: 'bold' },
-  btn: { flex: 1, padding: 16, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  btn: { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', justifyContent: 'center', minHeight: 48 },
   btnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  alertContainer: { backgroundColor: '#fff', width: '85%', borderRadius: 30, padding: 25, alignItems: 'center', borderTopWidth: 8 },
+  alertContainer: { backgroundColor: '#fff', width: '90%', borderRadius: 30, padding: 24, alignItems: 'center', borderTopWidth: 8 },
   alertTitle: { fontSize: 20, fontWeight: '900', marginTop: 15, textAlign: 'center' },
   alertMessage: { fontSize: 16, color: '#444', textAlign: 'center', marginVertical: 20, lineHeight: 22 },
   selectBtn: { backgroundColor: '#007AFF', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, marginTop: 8, flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start' },
