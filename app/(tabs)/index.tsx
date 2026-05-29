@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { useAppContext } from '../context/AppContext';
 
 const parseScadenza = (scadenza: any): number => {
@@ -21,6 +22,27 @@ const parseScadenza = (scadenza: any): number => {
     }
   }
   return new Date(scadenza).getTime();
+};
+
+const polarToCartesian = (centerX: number, centerY: number, radius: number, angleInDegrees: number) => {
+  const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
+  return {
+    x: centerX + radius * Math.cos(angleInRadians),
+    y: centerY + radius * Math.sin(angleInRadians),
+  };
+};
+
+const getArcPath = (x: number, y: number, radius: number, startAngle: number, endAngle: number) => {
+  if (startAngle === endAngle) return '';
+  // Se copre l'intero cerchio (360 gradi o quasi), approssimiamo per evitare glitch dell'SVG path
+  let adjustedEndAngle = endAngle;
+  if (endAngle - startAngle >= 360) {
+    adjustedEndAngle = startAngle + 359.99;
+  }
+  const start = polarToCartesian(x, y, radius, adjustedEndAngle);
+  const end = polarToCartesian(x, y, radius, startAngle);
+  const largeArcFlag = adjustedEndAngle - startAngle <= 180 ? '0' : '1';
+  return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`;
 };
 
 export default function HomeScreen() {
@@ -37,7 +59,11 @@ export default function HomeScreen() {
     return new Date().toLocaleDateString('it-IT', { month: 'long' }).toUpperCase();
   }, []);
 
-  const chartColors = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899'];
+  const chartColors = [
+    '#4f46e5', '#10b981', '#f59e0b', '#ec4899', 
+    '#06b6d4', '#8b5cf6', '#f43f5e', '#14b8a6', 
+    '#3b82f6', '#6366f1', '#a855f7', '#f97316'
+  ];
 
   const getMealsForDate = (dateStr: string) => {
     if (!plan[dateStr]) return [];
@@ -115,10 +141,10 @@ export default function HomeScreen() {
     return count;
   }, [plan]);
 
+  /* RISOLTO: Logica di analytics riscritta per gestire i singoli prodotti dispensa */
   const plannerAnalytics = useMemo(() => {
     const productCounts: { [key: string]: number } = {};
     const ingredientCounts: { [key: string]: number } = {};
-    let totalIngredientsCounted = 0;
 
     targetDates.forEach(dateStr => {
       getMealsForDate(dateStr).forEach((meal: any) => {
@@ -133,44 +159,39 @@ export default function HomeScreen() {
             if (ingName && ingName.trim() !== '') {
               const formattedIng = ingName.trim().toLowerCase();
               ingredientCounts[formattedIng] = (ingredientCounts[formattedIng] || 0) + 1;
-              totalIngredientsCounted++;
             }
           });
-        } else if (meal.nome) {
+        } else if (meal.nome && meal.nome.trim() !== '') {
+          // CORREZIONE: Qui si sommavano le stringhe sminchiando l'aerogramma. Ora incrementa correttamente!
           const formattedIng = meal.nome.trim().toLowerCase();
           ingredientCounts[formattedIng] = (ingredientCounts[formattedIng] || 0) + 1;
-          totalIngredientsCounted++;
         }
       });
     });
 
-    const productsSorted = Object.entries(productCounts).sort((a, b) => b[1] - a[1]).slice(0, 4);
+    const productsSorted = Object.entries(productCounts).sort((a, b) => b[1] - a[1]);
     const maxProductVal = productsSorted.length > 0 ? Math.max(...productsSorted.map(([_, val]) => val)) : 1;
-    const ingredientsSorted = Object.entries(ingredientCounts).sort((a, b) => b[1] - a[1]).slice(0, 4);
+    const ingredientsSorted = Object.entries(ingredientCounts).sort((a, b) => b[1] - a[1]);
+    
+    const totalIngredientsCounted = ingredientsSorted.reduce((sum, [_, count]) => sum + count, 0);
 
-    const segmentsData: any[] = [];
-    let accumulatedRotation = 0;
+    let currentAngle = 0;
+    const gapAngle = ingredientsSorted.length > 1 ? 1 : 0; 
 
-    ingredientsSorted.forEach(([name, count], index) => {
+    const svgSegments = ingredientsSorted.map(([name, count], index) => {
       const percentage = totalIngredientsCounted > 0 ? count / totalIngredientsCounted : 0;
-      const totalDegrees = percentage * 360;
-      const color = chartColors[index % chartColors.length];
+      const angleDelta = percentage * 360;
+      const startAngle = currentAngle;
+      const endAngle = Math.max(startAngle, currentAngle + angleDelta - gapAngle);
+      
+      currentAngle += angleDelta;
 
-      let remainingDegrees = totalDegrees;
-      let currentRotation = accumulatedRotation;
-
-      while (remainingDegrees > 0) {
-        const currentSegmentDegrees = Math.min(remainingDegrees, 90);
-        segmentsData.push({
-          key: `${name}-${remainingDegrees}`,
-          color,
-          rotation: currentRotation,
-          size: currentSegmentDegrees
-        });
-        currentRotation += currentSegmentDegrees;
-        remainingDegrees -= currentSegmentDegrees;
-      }
-      accumulatedRotation += totalDegrees;
+      return {
+        name,
+        startAngle,
+        endAngle,
+        color: chartColors[index % chartColors.length]
+      };
     });
 
     const pieLegends = ingredientsSorted.map(([name, count], index) => ({
@@ -183,7 +204,7 @@ export default function HomeScreen() {
     return {
       products: productsSorted,
       maxProductVal,
-      visualSegments: segmentsData,
+      svgSegments,
       legends: pieLegends,
       totalIngredientsCounted
     };
@@ -223,7 +244,7 @@ export default function HomeScreen() {
       }
     });
 
-    return missing.slice(0, 3);
+    return missing; 
   }, [plan, pantry]);
 
   const stats = [
@@ -266,15 +287,14 @@ export default function HomeScreen() {
               style={styles.statCard}
               onPress={() => router.push(stat.route as any)}
             >
-              <View style={[styles.iconContainer, { backgroundColor: stat.color + '20' }]}>
-                <Ionicons name={stat.icon} size={22} color={stat.color} />
+              <View style={[styles.iconContainer, { backgroundColor: stat.color + '15' }]}>
+                <Ionicons name={stat.icon} size={20} color={stat.color} />
               </View>
               <Text style={styles.statValue}>{stat.value}</Text>
               <Text style={styles.statLabel}>{stat.label}</Text>
             </TouchableOpacity>
           ))}
         </View>
-
 
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Pasti di Oggi 🍽️</Text>
@@ -285,7 +305,7 @@ export default function HomeScreen() {
                   <View style={styles.mealBadgeType}>
                     <Text style={styles.mealBadgeTypeText}>{meal.type}</Text>
                   </View>
-                  <View style={{ flex: 1, marginLeft: 10 }}>
+                  <View style={{ flex: 1, marginLeft: 12 }}>
                     <Text style={styles.todayMealName}>{meal.nome}</Text>
                     {meal.tempo ? <Text style={styles.todayMealTime}>⏱️ {meal.tempo} min</Text> : null}
                   </View>
@@ -293,66 +313,81 @@ export default function HomeScreen() {
                 </View>
               ))
             ) : (
-              <Text style={styles.emptyText}>Nessun pasto pianificato per oggi.</Text>
+              <View style={styles.centerEmptyWrapper}>
+                <Ionicons name="fast-food-outline" size={32} color="#94a3b8" />
+                <Text style={styles.emptyText}>Nessun pasto pianificato per oggi.</Text>
+              </View>
             )}
           </View>
         </View>
 
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>
-            Prodotti più Pianificati ({viewMode === 'week' ? 'Questa Settimana' : currentMonthName})
+            Ricette più utilizzate ({viewMode === 'week' ? 'Questa Settimana' : currentMonthName})
           </Text>
           <View style={styles.cardContainer}>
             {plannerAnalytics.products.length > 0 ? (
-              <View style={styles.histogramContainer}>
-                {plannerAnalytics.products.map(([prodName, count], index) => {
-                  const barHeight = (count / plannerAnalytics.maxProductVal) * 110;
-                  return (
-                    <View key={prodName} style={styles.histogramColumn}>
-                      <View style={styles.barWrapper}>
-                        <Text style={styles.barValue}>{count}x</Text>
-                        <View 
-                          style={[
-                            styles.histogramBar, 
-                            { height: barHeight || 10, backgroundColor: chartColors[index % chartColors.length] }
-                          ]} 
-                        />
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 5 }}>
+                <View style={styles.histogramContainer}>
+                  {plannerAnalytics.products.map(([prodName, count], index) => {
+                    const barHeight = (count / plannerAnalytics.maxProductVal) * 105;
+                    const color = chartColors[index % chartColors.length];
+                    return (
+                      <View key={prodName} style={styles.histogramColumn}>
+                        <View style={styles.barsContainerRow}>
+                          <View style={styles.barWrapper}>
+                            <Text style={[styles.barValue, { color: color }]}>{count}x</Text>
+                            <View 
+                              style={[
+                                styles.histogramBar, 
+                                { height: Math.max(barHeight, 8), backgroundColor: color }
+                              ]} 
+                            />
+                          </View>
+                        </View>
+                        <Text style={styles.columnLabel}>{prodName}</Text>
                       </View>
-                      <Text style={styles.columnLabel} numberOfLines={1}>{prodName}</Text>
-                    </View>
-                  );
-                })}
-              </View>
+                    );
+                  })}
+                </View>
+              </ScrollView>
             ) : (
-              <Text style={styles.emptyText}>
-                Nessun prodotto pianificato per {viewMode === 'week' ? 'questa settimana' : currentMonthName.toLowerCase()}.
-              </Text>
+              <View style={styles.centerEmptyWrapper}>
+                <Ionicons name="bar-chart-outline" size={32} color="#94a3b8" />
+                <Text style={styles.emptyText}>
+                  Nessun prodotto pianificato per {viewMode === 'week' ? 'questa settimana' : currentMonthName.toLowerCase()}.
+                </Text>
+              </View>
             )}
           </View>
         </View>
 
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>
-            Ingredienti & Alimenti Consumati ({viewMode === 'week' ? 'Questa Settimana' : currentMonthName})
+            Ingredienti e Alimenti Consumati ({viewMode === 'week' ? 'Questa Settimana' : currentMonthName})
           </Text>
           <View style={styles.cardContainer}>
             {plannerAnalytics.legends.length > 0 ? (
               <View style={styles.pieSectionWrapper}>
                 <View style={styles.pieChartContainer}>
                   <View style={styles.pieOuterCircle}>
-                    {plannerAnalytics.visualSegments.map((seg: any) => (
-                      <View 
-                        key={seg.key}
-                        style={[
-                          styles.pieSegmentLine,
-                          { 
-                            borderLeftColor: seg.color,
-                            borderTopColor: seg.size > 45 ? seg.color : 'transparent',
-                            transform: [{ rotate: `${seg.rotation}deg` }]
-                          }
-                        ]}
-                      />
-                    ))}
+                    
+                    <Svg width="130" height="130" viewBox="0 0 130 130">
+                      {plannerAnalytics.svgSegments.map((segment, index) => {
+                        const dPath = getArcPath(65, 65, 56, segment.startAngle, segment.endAngle);
+                        if (!dPath) return null;
+                        return (
+                          <Path
+                            key={index}
+                            d={dPath}
+                            fill="none"
+                            stroke={segment.color}
+                            strokeWidth="12"
+                          />
+                        );
+                      })}
+                    </Svg>
+
                     <View style={styles.pieInnerCore}>
                       <Text style={styles.pieCoreNumber}>{plannerAnalytics.totalIngredientsCounted}</Text>
                       <Text style={styles.pieCoreText}>Totali</Text>
@@ -361,39 +396,54 @@ export default function HomeScreen() {
                 </View>
 
                 <View style={styles.pieLegendContainer}>
-                  {plannerAnalytics.legends.map((seg) => (
-                    <View key={seg.name} style={styles.legendRowItem}>
-                      <View style={[styles.legendColorDot, { backgroundColor: seg.color }]} />
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.legendMainText} numberOfLines={1}>
-                          {seg.name.charAt(0).toUpperCase() + seg.name.slice(1)}
-                        </Text>
-                        <Text style={styles.legendSubText}>{seg.count} volte ({seg.percentage}%)</Text>
+                  <ScrollView nestedScrollEnabled={true} style={{ maxHeight: 150 }} showsVerticalScrollIndicator={false}>
+                    {plannerAnalytics.legends.map((seg) => (
+                      <View key={seg.name} style={styles.legendRowItem}>
+                        <View style={[styles.legendColorDot, { backgroundColor: seg.color }]} />
+                        <View style={{ flex: 1, marginRight: 4 }}>
+                          <Text style={styles.legendMainText} numberOfLines={1}>
+                            {seg.name.charAt(0).toUpperCase() + seg.name.slice(1)}
+                          </Text>
+                          <Text style={styles.legendSubText}>{seg.count} {seg.count === 1 ? 'volta' : 'volte'}</Text>
+                        </View>
+                        <View style={styles.percentageBadge}>
+                          <Text style={styles.percentageBadgeText}>{seg.percentage}%</Text>
+                        </View>
                       </View>
-                    </View>
-                  ))}
+                    ))}
+                  </ScrollView>
                 </View>
               </View>
             ) : (
-              <Text style={styles.emptyText}>
-                Nessun alimento o ingrediente rilevato nel piano di {viewMode === 'week' ? 'questa settimana' : currentMonthName.toLowerCase()}.
-              </Text>
+              <View style={styles.centerEmptyWrapper}>
+                <Ionicons name="pie-chart-outline" size={32} color="#94a3b8" />
+                <Text style={styles.emptyText}>
+                  Nessun alimento rilevato nel piano di {viewMode === 'week' ? 'questa settimana' : currentMonthName.toLowerCase()}.
+                </Text>
+              </View>
             )}
           </View>
         </View>
 
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Stato Dispensa & Spesa ⚠️</Text>
+          <Text style={styles.sectionTitle}>Stato Dispensa e Spesa ⚠️</Text>
           <View style={styles.cardContainer}>
             
             <Text style={styles.subContainerTitle}>Mancanti per i pasti settimanali:</Text>
+            
             {missingIngredients.length > 0 ? (
-              missingIngredients.map((ingName, index) => (
-                <View key={index} style={styles.alertRow}>
-                  <Ionicons name="cart" size={16} color="#ef4444" style={{ marginRight: 6 }} />
-                  <Text style={styles.alertItemName}>{ingName}</Text>
-                </View>
-              ))
+              <View style={{ maxHeight: 160 }}>
+                <ScrollView nestedScrollEnabled={true} showsVerticalScrollIndicator={false}>
+                  {missingIngredients.map((ingName, index) => (
+                    <View key={index} style={styles.alertRow}>
+                      <View style={styles.alertCartIconBg}>
+                        <Ionicons name="cart" size={14} color="#ef4444" />
+                      </View>
+                      <Text style={styles.alertItemName}>{ingName}</Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
             ) : (
               <Text style={[styles.emptyText, { textAlign: 'left', paddingVertical: 4 }]}>Hai tutto l'occorrente pianificato!</Text>
             )}
@@ -402,20 +452,20 @@ export default function HomeScreen() {
 
             <Text style={styles.subContainerTitle}>Prodotti critici in dispensa:</Text>
             {expiringItems.length > 0 ? (
-            
               <ScrollView 
                 horizontal 
-                showsHorizontalScrollIndicator={true} 
+                showsHorizontalScrollIndicator={false} 
                 contentContainerStyle={styles.horizontalScrollGap}
               >
                 {expiringItems.map((item, index) => {
                   const isExpired = item.time < new Date().setHours(0,0,0,0);
+                  const statusColor = isExpired ? '#ef4444' : '#f59e0b';
                   return (
-                    <View key={index} style={styles.horizontalAlertCard}>
-                      <View style={[styles.dot, { backgroundColor: isExpired ? '#ef4444' : '#f59e0b' }]} />
+                    <View key={index} style={[styles.horizontalAlertCard, { borderColor: statusColor + '30' }]}>
+                      <View style={[styles.dot, { backgroundColor: statusColor }]} />
                       <View style={{ flex: 1 }}>
                         <Text style={styles.alertItemName} numberOfLines={1}>{item.nome}</Text>
-                        <Text style={[styles.itemDate, { color: isExpired ? '#ef4444' : '#f59e0b', fontWeight: '600' }]}>
+                        <Text style={[styles.itemDate, { color: statusColor }]}>
                           {isExpired ? 'Scaduto' : `Scade il: ${item.scadenza}`}
                         </Text>
                       </View>
@@ -425,7 +475,7 @@ export default function HomeScreen() {
               </ScrollView>
             ) : (
               <Text style={[styles.emptyText, { textAlign: 'left', paddingVertical: 4 }]}>
-                Nessun prodotto scaduto o in scadenza nei prossimi 3 giorni.
+                Nessun prodotto scaduto o in scadenza nei primi 3 giorni.
               </Text>
             )}
           </View>
@@ -436,7 +486,7 @@ export default function HomeScreen() {
             style={styles.actionButton}
             onPress={() => router.push('/planner')}
           >
-            <Ionicons name="add-circle-outline" size={24} color="#fff" />
+            <Ionicons name="calendar-outline" size={20} color="#fff" />
             <Text style={styles.actionButtonText}>Gestisci Piano Pasti</Text>
           </TouchableOpacity>
         </View>
@@ -452,140 +502,140 @@ const styles = StyleSheet.create({
   container: { padding: 20 },
   header: { marginTop: 10, marginBottom: 20 }, 
   headerMainRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
-  welcomeText: { fontSize: 14, color: '#64748b', fontWeight: '500' }, 
-  mainTitle: { fontSize: 24, fontWeight: 'bold', color: '#1e293b' },
+  welcomeText: { fontSize: 13, color: '#64748b', fontWeight: '600', letterSpacing: 0.3 }, 
+  mainTitle: { fontSize: 26, fontWeight: 'bold', color: '#0f172a', letterSpacing: -0.5 },
   statsGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 25 },
   statCard: {
     backgroundColor: '#fff',
     width: '31%',
-    padding: 12,
+    padding: 16,
     borderRadius: 20,
     alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#000',
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+    elevation: 2,
+    shadowColor: '#0f172a',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
   },
-  iconContainer: { padding: 8, borderRadius: 12, marginBottom: 8 },
-  statValue: { fontSize: 18, fontWeight: 'bold', color: '#1e293b', marginVertical: 2 },
-  statLabel: { fontSize: 10, color: '#64748b', textAlign: 'center', fontWeight: '500' },
+  iconContainer: { padding: 10, borderRadius: 14, marginBottom: 8 },
+  statValue: { fontSize: 20, fontWeight: '700', color: '#0f172a', marginVertical: 1 },
+  statLabel: { fontSize: 11, color: '#64748b', textAlign: 'center', fontWeight: '500' },
   sectionContainer: { marginBottom: 25 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#1e293b', marginBottom: 12 },
+  sectionTitle: { fontSize: 17, fontWeight: '700', color: '#0f172a', marginBottom: 14, letterSpacing: -0.2 },
   cardContainer: {
     backgroundColor: '#fff',
-    borderRadius: 20,
+    borderRadius: 24,
     padding: 20,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
     elevation: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
+    shadowColor: '#0f172a',
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
   },
   toggleContainer: { 
     flexDirection: 'row', 
-    backgroundColor: '#e2e8f0', 
-    borderRadius: 10, 
-    padding: 3,
+    backgroundColor: '#f1f5f9', 
+    borderRadius: 12, 
+    padding: 4,
     alignSelf: 'center'
   },
   toggleButton: { 
-    paddingHorizontal: 10, 
-    paddingVertical: 4, 
-    borderRadius: 7 
+    paddingHorizontal: 12, 
+    paddingVertical: 6, 
+    borderRadius: 9 
   },
   toggleButtonActive: { 
     backgroundColor: '#fff', 
     elevation: 2, 
     shadowColor: '#000', 
     shadowOpacity: 0.05, 
-    shadowRadius: 2 
+    shadowRadius: 3 
   },
   toggleText: { 
-    fontSize: 11, 
+    fontSize: 12, 
     fontWeight: '600', 
     color: '#64748b' 
   },
   toggleTextActive: { 
-    color: '#1e293b' 
+    color: '#0f172a' 
   },
-  todayMealRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderColor: '#f1f5f9' },
-  mealBadgeType: { backgroundColor: '#eff6ff', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, width: 85, alignItems: 'center' },
-  mealBadgeTypeText: { fontSize: 10, fontWeight: 'bold', color: '#3b82f6' },
+  todayMealRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderColor: '#f1f5f9' },
+  mealBadgeType: { backgroundColor: '#f0fdf4', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, width: 85, alignItems: 'center' },
+  mealBadgeTypeText: { fontSize: 10, fontWeight: '700', color: '#16a34a', letterSpacing: 0.5 },
   todayMealName: { fontSize: 14, fontWeight: '600', color: '#334155' },
-  todayMealTime: { fontSize: 11, color: '#64748b', marginTop: 2 },
-  histogramContainer: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-end', height: 140, paddingTop: 5 },
-  histogramColumn: { alignItems: 'center', width: '22%' },
-  barWrapper: { width: '100%', alignItems: 'center', justifyContent: 'flex-end', height: 110 },
-  barValue: { fontSize: 11, fontWeight: 'bold', color: '#64748b', marginBottom: 4 },
-  histogramBar: { width: 24, borderTopLeftRadius: 6, borderTopRightRadius: 6 },
-  columnLabel: { fontSize: 11, color: '#64748b', marginTop: 8, textAlign: 'center', width: '100%' },
+  todayMealTime: { fontSize: 11, color: '#64748b', marginTop: 3, fontWeight: '500' },
+  
+  histogramContainer: { flexDirection: 'row', alignItems: 'flex-start', paddingTop: 10, paddingHorizontal: 5, gap: 14 },
+  histogramColumn: { alignItems: 'center', minWidth: 100, maxWidth: 130, paddingHorizontal: 4 },
+  barsContainerRow: { height: 110, justifyContent: 'flex-end', width: '100%', alignItems: 'center' },
+  barWrapper: { width: 45, alignItems: 'center', justifyContent: 'flex-end', height: 110, backgroundColor: '#f8fafc', borderRadius: 8, paddingBottom: 4 },
+  barValue: { fontSize: 11, fontWeight: '700', marginBottom: 4 },
+  histogramBar: { width: 32, borderRadius: 6 },
+  columnLabel: { fontSize: 11, color: '#64748b', fontWeight: '500', marginTop: 8, textAlign: 'center', width: '100%' },
+  
   pieSectionWrapper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  pieChartContainer: { width: '45%', alignItems: 'center', justifyContent: 'center' },
-  pieOuterCircle: { 
-    width: 130, 
-    height: 130, 
-    borderRadius: 65, 
-    backgroundColor: '#f1f5f9', 
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pieSegmentLine: {
-    position: 'absolute',
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    borderWidth: 15,
-    borderColor: 'transparent',
-  },
+  pieChartContainer: { width: '40%', alignItems: 'center', justifyContent: 'center' },
+  pieOuterCircle: { width: 130, height: 130, borderRadius: 65, position: 'relative', alignItems: 'center', justifyContent: 'center' },
   pieInnerCore: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    position: 'absolute',
+    width: 92,
+    height: 92,
+    borderRadius: 46,
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
+    elevation: 4,
+    shadowColor: '#0f172a',
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    zIndex: 10,
   },
-  pieCoreNumber: { fontSize: 22, fontWeight: 'bold', color: '#1e293b' },
-  pieCoreText: { fontSize: 10, color: '#94a3b8', fontWeight: 'bold' },
-  pieLegendContainer: { width: '50%', gap: 10 },
-  legendRowItem: { flexDirection: 'row', alignItems: 'center' },
-  legendColorDot: { width: 10, height: 10, borderRadius: 5, marginRight: 8 },
-  legendMainText: { fontSize: 13, fontWeight: '600', color: '#334155' },
-  legendSubText: { fontSize: 11, color: '#64748b' },
-  subContainerTitle: { fontSize: 13, fontWeight: 'bold', color: '#475569', marginBottom: 8 },
+  pieCoreNumber: { fontSize: 24, fontWeight: 'bold', color: '#0f172a', letterSpacing: -0.5 },
+  pieCoreText: { fontSize: 10, color: '#94a3b8', fontWeight: '700', letterSpacing: 0.5, marginTop: -2 },
+  pieLegendContainer: { width: '56%' },
+  legendRowItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, paddingVertical: 2 },
+  legendColorDot: { width: 8, height: 8, borderRadius: 4, marginRight: 10 },
+  legendMainText: { fontSize: 13, fontWeight: '600', color: '#1e293b' },
+  legendSubText: { fontSize: 11, color: '#64748b', marginTop: 1, fontWeight: '500' },
+  percentageBadge: { backgroundColor: '#f1f5f9', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6 },
+  percentageBadgeText: { fontSize: 10, fontWeight: '700', color: '#475569' },
+
+  subContainerTitle: { fontSize: 13, fontWeight: '700', color: '#475569', marginBottom: 10, letterSpacing: -0.1 },
   alertRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  alertCartIconBg: { backgroundColor: '#fef2f2', padding: 6, borderRadius: 8, marginRight: 10 },
   dot: { width: 8, height: 8, borderRadius: 4, marginRight: 8 },
-  alertItemName: { fontWeight: '600', color: '#334155', fontSize: 14 },
-  itemDate: { fontSize: 11, marginTop: 2 },
-  divider: { height: 1, backgroundColor: '#e2e8f0', marginVertical: 15 },
-  emptyText: { textAlign: 'center', color: '#94a3b8', fontStyle: 'italic', paddingVertical: 10, fontSize: 13 },
+  alertItemName: { fontWeight: '600', color: '#334155', fontSize: 13 },
+  itemDate: { fontSize: 11, marginTop: 2, fontWeight: '500' },
+  divider: { height: 1, backgroundColor: '#f1f5f9', marginVertical: 16 },
+  centerEmptyWrapper: { alignItems: 'center', justifyContent: 'center', paddingVertical: 20, gap: 8 },
+  emptyText: { textAlign: 'center', color: '#94a3b8', fontWeight: '500', fontSize: 13, maxWidth: '80%' },
   quickActions: { marginTop: 5 },
   actionButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#4f46e5',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
-    borderRadius: 15,
-    gap: 10,
+    borderRadius: 18,
+    gap: 8,
     elevation: 3,
+    shadowColor: '#4f46e5',
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
   },
-  actionButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  actionButtonText: { color: '#fff', fontSize: 15, fontWeight: '700' },
   horizontalScrollGap: { gap: 12, paddingRight: 10 },
   horizontalAlertCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#fff',
     paddingVertical: 10,
     paddingHorizontal: 14,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    minWidth: 150,
+    minWidth: 160,
   }
 });
