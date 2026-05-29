@@ -3,7 +3,6 @@ import { useIsFocused } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  FlatList,
   Image,
   KeyboardAvoidingView,
   Modal,
@@ -191,7 +190,6 @@ export default function RecipesScreen() {
     if (!form.nome.trim() || !form.procedimento.trim()) return;
   
     const catLow = form.categoria.toLowerCase().trim();
-    
     const selectedImg = editingRecipe?.immagine 
       ? editingRecipe.immagine 
       : (CATEGORY_IMAGES[catLow] || CATEGORY_IMAGES.default);
@@ -281,47 +279,57 @@ export default function RecipesScreen() {
         </View>
       </View>
 
-      <View style={styles.mainFilterRow}>
-        <View style={styles.categoriesBlockContainer}>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            style={[styles.categoryCard, selectedCategory === 'all' && styles.categoryCardActive]}
-            onPress={() => setSelectedCategory('all')}
-          >
-            <View style={styles.iconWrapper}>
-              <Ionicons name={CATEGORY_CONFIG.all.icon as any} size={26} color={selectedCategory === 'all' ? '#fff' : '#007fff'} />
-            </View>
-            <Text style={[styles.categoryLabel, selectedCategory === 'all' && styles.categoryLabelActive]}>
-              {CATEGORY_CONFIG.all.label}
-            </Text>
-          </TouchableOpacity>
+      <View style={styles.filtersWrapper}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalScrollPadding}
+        >
+          <View style={styles.categoriesBlockContainer}>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={[styles.categoryCard, selectedCategory === 'all' && styles.categoryCardActive]}
+              onPress={() => setSelectedCategory('all')}
+            >
+              <View style={styles.iconWrapper}>
+                <Ionicons name={CATEGORY_CONFIG.all.icon as any} size={26} color={selectedCategory === 'all' ? '#fff' : '#007fff'} />
+              </View>
+              <Text style={[styles.categoryLabel, selectedCategory === 'all' && styles.categoryLabelActive]}>
+                {CATEGORY_CONFIG.all.label}
+              </Text>
+            </TouchableOpacity>
 
-          {RECIPE_CATEGORIES.map((cat) => {
-            const isSelected = selectedCategory === cat;
-            const config = CATEGORY_CONFIG[cat] || { label: cat, icon: 'restaurant', type: 'ionicons', color: '#64748b' };
-            return (
-              <TouchableOpacity
-                key={cat}
-                activeOpacity={0.8}
-                style={[styles.categoryCard, isSelected && styles.categoryCardActive]}
-                onPress={() => setSelectedCategory(cat)}
-              >
-                <View style={styles.iconWrapper}>
-                  {config.type === 'ionicons' ? (
-                    <Ionicons name={config.icon as any} size={26} color={isSelected ? '#fff' : config.color} />
-                  ) : (
-                    <MaterialCommunityIcons name={config.icon as any} size={26} color={isSelected ? '#fff' : config.color} />
-                  )}
-                </View>
-                <Text style={[styles.categoryLabel, isSelected && styles.categoryLabelActive]} numberOfLines={1}>
-                  {config.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+            {RECIPE_CATEGORIES.map((cat) => {
+              const isSelected = selectedCategory === cat;
+              const config = CATEGORY_CONFIG[cat] || { label: cat, icon: 'restaurant', type: 'ionicons', color: '#64748b' };
+              return (
+                <TouchableOpacity
+                  key={cat}
+                  activeOpacity={0.8}
+                  style={[styles.categoryCard, isSelected && styles.categoryCardActive]}
+                  onPress={() => setSelectedCategory(cat)}
+                >
+                  <View style={styles.iconWrapper}>
+                    {config.type === 'ionicons' ? (
+                      <Ionicons name={config.icon as any} size={26} color={isSelected ? '#fff' : config.color} />
+                    ) : (
+                      <MaterialCommunityIcons name={config.icon as any} size={26} color={isSelected ? '#fff' : config.color} />
+                    )}
+                  </View>
+                  <Text style={[styles.categoryLabel, isSelected && styles.categoryLabelActive]} numberOfLines={1}>
+                    {config.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </ScrollView>
 
-        <View style={styles.rightFiltersContainer}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalScrollPadding}
+        >
           <View style={styles.pillsRowWrap}>
             <TouchableOpacity
               style={[styles.statusPill, difficultyFilter === 'tutti' && styles.statusPillActive]}
@@ -356,7 +364,13 @@ export default function RecipesScreen() {
               <View style={[styles.dot, { backgroundColor: '#ef4444' }]} />
             </TouchableOpacity>
           </View>
+        </ScrollView>
 
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalScrollPadding}
+        >
           <View style={styles.pillsRowWrap}>
             <TouchableOpacity
               style={[styles.statusPill, timeFilter === 'tutti' && styles.statusPillActive]}
@@ -388,119 +402,116 @@ export default function RecipesScreen() {
               <Text style={styles.statusPillText}>&gt; 40 min ⏱️</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </ScrollView>
       </View>
 
-      <FlatList 
-        data={filteredRecipes} 
-        keyExtractor={(item) => String(item.id)} 
-        contentContainerStyle={{ paddingBottom: 100 }}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
+      <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+        {filteredRecipes.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Ionicons name="search-outline" size={48} color="#cbd5e1" />
             <Text style={styles.emptyText}>Nessuna ricetta corrisponde ai filtri impostati.</Text>
           </View>
-        }
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <TouchableOpacity 
-              activeOpacity={0.8}
-              onPress={() => setSelectedId(selectedId === String(item.id) ? null : String(item.id))}
-            >
-              <Image 
-                source={ item.immagine ? (typeof item.immagine === 'string' ? { uri: item.immagine } : item.immagine)
-                : { uri: CATEGORY_IMAGES[item.categoria?.toLowerCase()?.trim()] || CATEGORY_IMAGES.default } }  
-                style={styles.cardImg} 
-                resizeMode="cover"
-                fadeDuration={0}
-              />
-              <View style={styles.cardContent}>
-                <View style={styles.rowBetween}>
-                  <Text style={styles.title} numberOfLines={1}>{item.nome}</Text>
-                  <Text style={styles.catBadge}>{item.categoria?.toUpperCase()}</Text>
-                </View>
+        ) : (
+          filteredRecipes.map((item) => (
+            <View key={String(item.id)} style={styles.card}>
+              <TouchableOpacity 
+                activeOpacity={0.8}
+                onPress={() => setSelectedId(selectedId === String(item.id) ? null : String(item.id))}
+              >
+                <Image 
+                  source={ item.immagine ? (typeof item.immagine === 'string' ? { uri: item.immagine } : item.immagine)
+                  : { uri: CATEGORY_IMAGES[item.categoria?.toLowerCase()?.trim()] || CATEGORY_IMAGES.default } }  
+                  style={styles.cardImg} 
+                  resizeMode="cover"
+                  fadeDuration={0}
+                />
+                <View style={styles.cardContent}>
+                  <View style={styles.rowBetween}>
+                    <Text style={styles.title} numberOfLines={1}>{item.nome}</Text>
+                    <Text style={styles.catBadge}>{item.categoria?.toUpperCase()}</Text>
+                  </View>
 
-                <View style={styles.specsRow}>
-                  <View style={styles.specInlineItem}>
-                    <Ionicons name="restaurant-outline" size={15} color="#64748b" />
-                    <Text style={styles.specInlineText}>Difficoltà: </Text>
-                    <Text style={[styles.specInlineValue, { color: getDifficultyColor(item.difficolta) }]}>
-                      {item.difficolta === 'Bassa' || item.difficolta === 'Facile' || item.difficolta === 'Facili' ? 'Facile' : item.difficolta === 'Media' || item.difficolta === 'Medie' ? 'Media' : 'Difficile'}
+                  <View style={styles.specsRow}>
+                    <View style={styles.specInlineItem}>
+                      <Ionicons name="restaurant-outline" size={15} color="#64748b" />
+                      <Text style={styles.specInlineText}>Difficoltà: </Text>
+                      <Text style={[styles.specInlineValue, { color: getDifficultyColor(item.difficolta) }]}>
+                        {item.difficolta === 'Bassa' || item.difficolta === 'Facile' || item.difficolta === 'Facili' ? 'Facile' : item.difficolta === 'Media' || item.difficolta === 'Medie' ? 'Media' : 'Difficile'}
+                      </Text>
+                    </View>
+                    <View style={styles.specInlineItem}>
+                      <Ionicons name="time-outline" size={15} color="#64748b" />
+                      <Text style={styles.specInlineText}>Prep: </Text>
+                      <Text style={styles.specInlineValue}>{item.tempoPreparazione || 0} min</Text>
+                    </View>
+                    <View style={styles.specInlineItem}>
+                      <Ionicons name="people-outline" size={15} color="#64748b" />
+                      <Text style={styles.specInlineText}>Dosi: </Text>
+                      <Text style={styles.specInlineValue}>{item.porzioni || 1} {item.porzioni === 1 ? 'persona' : 'persone'}</Text>
+                    </View>
+                  </View>
+                  
+                  {isPickerMode && (
+                    <TouchableOpacity 
+                      style={styles.selectBtn} 
+                      onPress={() => handleSelectForPlanner(item)}
+                    >
+                      <Text style={styles.selectBtnText}>SELEZIONA PER {String(mealType || '').toUpperCase()}</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </TouchableOpacity>
+
+              {selectedId === String(item.id) && (
+                <View style={styles.details}>
+                  {item.descrizione ? (
+                    <View>
+                      <Text style={styles.sub}>Descrizione:</Text>
+                      <Text style={styles.txt}>{item.descrizione}</Text>
+                    </View>
+                  ) : null}
+
+                  <Text style={styles.sub}>Ingredienti:</Text>
+                  {item.ingredienti?.map((ing: any, i: number) => (
+                    <Text key={i} style={styles.txt}>
+                      • {ing.nome} ({ing.qta} {ing.unita || ''})
                     </Text>
-                  </View>
-                  <View style={styles.specInlineItem}>
-                    <Ionicons name="time-outline" size={15} color="#64748b" />
-                    <Text style={styles.specInlineText}>Prep: </Text>
-                    <Text style={styles.specInlineValue}>{item.tempoPreparazione || 0} min</Text>
-                  </View>
-                  <View style={styles.specInlineItem}>
-                    <Ionicons name="people-outline" size={15} color="#64748b" />
-                    <Text style={styles.specInlineText}>Dosi: </Text>
-                    <Text style={styles.specInlineValue}>{item.porzioni || 1} {item.porzioni === 1 ? 'persona' : 'persone'}</Text>
-                  </View>
-                </View>
-                
-                {isPickerMode && (
-                  <TouchableOpacity 
-                    style={styles.selectBtn} 
-                    onPress={() => handleSelectForPlanner(item)}
-                  >
-                    <Text style={styles.selectBtnText}>SELEZIONA PER {String(mealType || '').toUpperCase()}</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            </TouchableOpacity>
+                  ))}
 
-            {selectedId === String(item.id) && (
-              <View style={styles.details}>
-                {item.descrizione ? (
-                  <>
-                    <Text style={styles.sub}>Descrizione:</Text>
-                    <Text style={styles.txt}>{item.descrizione}</Text>
-                  </>
-                ) : null}
-
-                <Text style={styles.sub}>Ingredienti:</Text>
-                {item.ingredienti?.map((ing: any, i: number) => (
-                  <Text key={i} style={styles.txt}>
-                    • {ing.nome} ({ing.qta} {ing.unita || ''})
+                  <Text style={styles.sub}>Procedimento:</Text>
+                  <Text style={styles.txt}>
+                    {Array.isArray(item.procedimento) ? item.procedimento.join('\n') : item.procedimento}
                   </Text>
-                ))}
+                  
+                  {item.note ? (
+                    <View>
+                      <Text style={styles.sub}>Note:</Text>
+                      <Text style={styles.txt}>{item.note}</Text>
+                    </View>
+                  ) : null}
 
-                <Text style={styles.sub}>Procedimento:</Text>
-                <Text style={styles.txt}>
-                  {Array.isArray(item.procedimento) ? item.procedimento.join('\n') : item.procedimento}
-                </Text>
-                
-                {item.note ? (
-                  <>
-                    <Text style={styles.sub}>Note:</Text>
-                    <Text style={styles.txt}>{item.note}</Text>
-                  </>
-                ) : null}
-
-                {!isPickerMode && (
-                  <View style={styles.actions}>
-                    <Pressable 
-                      onPress={() => openForm(item)}
-                      style={({ pressed }) => [styles.actionButton, { opacity: pressed ? 0.6 : 1 }]}
-                    >
-                      <Ionicons name="pencil" size={22} color="#2f95dc"/>
-                    </Pressable>
-                    <Pressable 
-                      onPress={() => openDeleteConfirm(item.id)}
-                      style={({ pressed }) => [styles.actionButton, { opacity: pressed ? 0.6 : 1 }]}
-                    >
-                      <Ionicons name="trash" size={22} color="red"/>
-                    </Pressable>
-                  </View>
-                )}
-              </View>
-            )}
-          </View>
-        )} 
-      />
+                  {!isPickerMode && (
+                    <View style={styles.actions}>
+                      <Pressable 
+                        onPress={() => openForm(item)}
+                        style={({ pressed }) => [styles.actionButton, { opacity: pressed ? 0.6 : 1 }]}
+                      >
+                        <Ionicons name="pencil" size={22} color="#2f95dc"/>
+                      </Pressable>
+                      <Pressable 
+                        onPress={() => openDeleteConfirm(item.id)}
+                        style={({ pressed }) => [styles.actionButton, { opacity: pressed ? 0.6 : 1 }]}
+                      >
+                        <Ionicons name="trash" size={22} color="red"/>
+                      </Pressable>
+                    </View>
+                  )}
+                </View>
+              )}
+            </View>
+          ))
+        )}
+      </ScrollView>
       
       <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet">
         <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
@@ -536,7 +547,7 @@ export default function RecipesScreen() {
 
               <Text style={styles.label}>DIFFICOLTÀ *</Text>
               <View style={styles.difficultyContainer}>
-                {(['Bassa', 'Media', 'Alta'] as const).map(diff => (
+                {['Bassa', 'Media', 'Alta'].map(diff => (
                   <TouchableOpacity
                     key={diff}
                     style={[styles.diffBtn, form.difficolta === diff && { backgroundColor: getDifficultyColor(diff), borderColor: 'transparent' }]}
@@ -638,85 +649,24 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 15, paddingBottom: 5 },
   headerTitle: { fontSize: 24, fontWeight: '800', color: '#000' },
   cancelSelectionText: { color: '#ef4444', fontWeight: '700', fontSize: 14 },
-  
   searchContainer: { paddingHorizontal: 16, marginVertical: 12 },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f1f5f9',
-    paddingHorizontal: 16,
-    paddingVertical: Platform.OS === 'ios' ? 12 : 8,
-    borderRadius: 16,
-  },
+  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f1f5f9', paddingHorizontal: 16, paddingVertical: Platform.OS === 'ios' ? 12 : 8, borderRadius: 16 },
   searchInput: { flex: 1, fontSize: 15, color: '#1e293b' },
-
-  mainFilterRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap', 
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    gap: 16,
-  },
-  
-  categoriesBlockContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  categoryCard: {
-    width: 90,
-    height: 85,
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  categoryCardActive: {
-    backgroundColor: '#007fff',
-  },
+  filtersWrapper: { flexDirection: 'column', gap: 12, marginBottom: 16 },
+  horizontalScrollPadding: { paddingHorizontal: 16, alignItems: 'center' },
+  categoriesBlockContainer: { flexDirection: 'row', gap: 8 },
+  categoryCard: { width: 90, height: 85, backgroundColor: '#fff', borderRadius: 20, justifyContent: 'center', alignItems: 'center', padding: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 },
+  categoryCardActive: { backgroundColor: '#007fff' },
   iconWrapper: { marginBottom: 6, justifyContent: 'center', alignItems: 'center' },
   categoryLabel: { fontSize: 11, fontWeight: '700', color: '#1e293b', textAlign: 'center' },
   categoryLabelActive: { color: '#fff' },
-
-  rightFiltersContainer: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    gap: 8,
-    minWidth: 280, 
-  },
-  pillsRowWrap: {
-    flexDirection: 'row',
-    gap: 6,
-    alignItems: 'center',
-  },
-  statusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#e2e8f0',
-    paddingHorizontal: 10,
-    height: 32,
-    borderRadius: 16,
-    gap: 4,
-  },
-  statusPillActive: {
-    backgroundColor: '#007fff',
-  },
-  statusPillActiveState: {
-    backgroundColor: '#cbd5e1',
-    borderWidth: 1,
-    borderColor: '#94a3b8'
-  },
-  statusPillText: { fontSize: 12, fontWeight: '700', color: '#475569' },
+  pillsRowWrap: { flexDirection: 'row', gap: 6, alignItems: 'center' },
+  statusPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#e2e8f0', paddingHorizontal: 12, height: 36, borderRadius: 18, gap: 6 },
+  statusPillActive: { backgroundColor: '#007fff' },
+  statusPillActiveState: { backgroundColor: '#cbd5e1', borderWidth: 1, borderColor: '#94a3b8' },
+  statusPillText: { fontSize: 13, fontWeight: '700', color: '#475569' },
   statusPillTextActive: { color: '#fff' },
   dot: { width: 8, height: 8, borderRadius: 4 },
-
   card: { backgroundColor: '#fff', borderRadius: 24, marginHorizontal: 15, marginBottom: 18, overflow: 'hidden', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12 },
   cardImg: { width: '100%', height: 170 },
   cardContent: { padding: 16 },
@@ -734,43 +684,31 @@ const styles = StyleSheet.create({
   txt: { color: '#334155', fontSize: 14, lineHeight: 22 },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 20, paddingBottom: 5 },
   actionButton: { padding: 10, backgroundColor: '#fff', borderRadius: 50, borderWidth: 1, borderColor: '#e2e8f0', elevation: 1 },
-  modalTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderColor: '#f1f5f9' },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', color: '#1e293b' },
-  modalBody: { paddingHorizontal: 20 },
-  label: { fontSize: 11, fontWeight: 'bold', color: '#94a3b8', marginTop: 16, marginBottom: 6, letterSpacing: 0.5 },
-  input: { backgroundColor: '#f8fafc', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#e2e8f0', marginBottom: 12, fontSize: 15, color: '#1e293b' },
-  row: { flexDirection: 'row', gap: 12 },
-  categoriesChipsContainer: { paddingVertical: 4, gap: 8 },
-  categoryChip: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10, backgroundColor: '#f1f5f9', borderWidth: 1, borderColor: '#e2e8f0' },
-  categoryChipActive: { backgroundColor: '#2f95dc', borderColor: '#2f95dc' },
+  modalTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
+  modalTitle: { fontSize: 20, fontWeight: '800', color: '#1e293b' },
+  modalBody: { padding: 20 },
+  label: { fontSize: 12, fontWeight: '700', color: '#64748b', marginTop: 16, marginBottom: 6, letterSpacing: 0.5 },
+  input: { backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#cbd5e1', padding: 12, borderRadius: 12, fontSize: 15, color: '#1e293b', marginBottom: 4 },
+  row: { flexDirection: 'row', gap: 12, marginTop: 4 },
+  categoriesChipsContainer: { gap: 8, paddingVertical: 4 },
+  categoryChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#f1f5f9', borderWidth: 1, borderColor: '#e2e8f0' },
+  categoryChipActive: { backgroundColor: '#007fff', borderColor: 'transparent' },
   categoryChipText: { fontSize: 12, fontWeight: '700', color: '#64748b' },
   categoryChipTextActive: { color: '#fff' },
-  difficultyContainer: { flexDirection: 'row', gap: 8, marginBottom: 4 },
-  diffBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: '#e2e8f0', backgroundColor: '#f1f5f9', alignItems: 'center' },
+  difficultyContainer: { flexDirection: 'row', gap: 8, marginTop: 4 },
+  diffBtn: { flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: '#cbd5e1', backgroundColor: '#f8fafc' },
   diffBtnText: { fontSize: 12, fontWeight: '700', color: '#64748b' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
-  confirmBox: { width: '100%', maxWidth: 340, backgroundColor: '#fff', borderRadius: 24, padding: 24, alignItems: 'center' },
-  confirmTitle: { fontSize: 20, fontWeight: 'bold', marginTop: 12, color: '#1e293b' },
-  confirmButtons: { flexDirection: 'row', gap: 12, width: '100%', marginTop: 20 },
-  confirmBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
+  btnSave: { backgroundColor: '#007fff', padding: 16, borderRadius: 16, alignItems: 'center', marginTop: 24, marginBottom: 40 },
+  btnSaveText: { color: '#fff', fontWeight: '800', fontSize: 15, letterSpacing: 0.5 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' },
+  confirmBox: { backgroundColor: '#fff', padding: 24, borderRadius: 24, alignItems: 'center', width: '80%', maxWidth: 320 },
+  confirmTitle: { fontSize: 18, fontWeight: '700', color: '#1e293b', marginTop: 12, marginBottom: 20 },
+  confirmButtons: { flexDirection: 'row', gap: 12, width: '100%' },
+  confirmBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
   cancelBtn: { backgroundColor: '#f1f5f9' },
+  cancelBtnText: { color: '#64748b', fontWeight: '700' },
   deleteBtn: { backgroundColor: '#ef4444' },
-  cancelBtnText: { color: '#64748b', fontWeight: '600' },
-  deleteBtnText: { color: '#fff', fontWeight: 'bold' },
-  emptyContainer: { alignItems: 'center', padding: 40, gap: 8 },
-  emptyText: { color: '#64748b', textAlign: 'center', fontSize: 14 },
-  btnSave: {
-    backgroundColor: '#007fff',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 24,
-    marginBottom: 20,
-  },
-  btnSaveText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
+  deleteBtnText: { color: '#fff', fontWeight: '700' },
+  emptyContainer: { alignItems: 'center', justifyContent: 'center', padding: 40, marginTop: 40 },
+  emptyText: { color: '#94a3b8', textAlign: 'center', marginTop: 12, fontSize: 15, paddingHorizontal: 20 }
 });
