@@ -157,10 +157,14 @@ export default function RecipesScreen() {
 
   const handleSave = () => {
     if (!form.nome.trim() || !form.procedimento.trim()) return;
-
+  
     const catLow = form.categoria.toLowerCase().trim();
-    const selectedImg = CATEGORY_IMAGES[catLow] || CATEGORY_IMAGES.default;
-
+    
+    
+    const selectedImg = editingRecipe?.immagine 
+      ? editingRecipe.immagine 
+      : (CATEGORY_IMAGES[catLow] || CATEGORY_IMAGES.default);
+  
     const recipeData = {
       id: editingRecipe ? editingRecipe.id : Date.now().toString(),
       nome: form.nome,
@@ -174,7 +178,8 @@ export default function RecipesScreen() {
       ingredienti: form.ingredienti,
       immagine: selectedImg 
     };
-
+  
+  
     if (editingRecipe) updateRecipe(recipeData);
     else addRecipe(recipeData);
     setModalVisible(false);
@@ -378,8 +383,8 @@ export default function RecipesScreen() {
               onPress={() => setSelectedId(selectedId === String(item.id) ? null : String(item.id))}
             >
               <Image 
-              source={typeof item.immagine === 'string' ? { uri: item.immagine } : item.immagine} 
-              style={styles.cardImg} />
+              source={ item.immagine ? (typeof item.immagine === 'string' ? { uri: item.immagine } : item.immagine)
+              : { uri: CATEGORY_IMAGES[item.categoria?.toLowerCase()?.trim()] || CATEGORY_IMAGES.default } }  style={styles.cardImg} />
               <View style={styles.cardContent}>
                 <View style={styles.rowBetween}>
                   <Text style={styles.title} numberOfLines={1}>{item.nome}</Text>

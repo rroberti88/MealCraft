@@ -13,7 +13,7 @@ export interface Recipe {
   ingredienti: { nome: string; qta: string; unita:string}[];
   procedimento: string;
   note?: string;
-  immagine: string;
+  immagine: any;
 }
 
 export interface PantryItem {
@@ -86,7 +86,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         const currentPlan = sPlan ? JSON.parse(sPlan) : {};
 
         if (currentRecipes.length > 0) {
-          setRecipes(currentRecipes);
+          
+          const recipesWithRestoredImages = currentRecipes.map((savedRecipe: any) => {
+           
+            const originalRecipe = INITIAL_RECIPES.find(r => String(r.id) === String(savedRecipe.id));
+            
+            return {
+              ...savedRecipe,
+            
+              immagine: originalRecipe ? originalRecipe.immagine : savedRecipe.immagine
+            };
+          });
+
+          setRecipes(recipesWithRestoredImages);
         } else {
           setRecipes(INITIAL_RECIPES);
         }
