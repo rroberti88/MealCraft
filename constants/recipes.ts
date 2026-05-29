@@ -13,7 +13,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Taglia i pomodorini, condiscili con olio, sale e basilico. Tosta il pane, strofina un po' d'aglio e aggiungi i pomodorini.",
       note: "Usa pane casereccio per un risultato migliore.",
-      immagine: "https://images.unsplash.com/photo-1541529086526-db283c563270?w=800",
+      immagine: require("../assets/immagini_ricette/bruschette_al_pomodoro.png"),
       ingredienti: [
         { nome: "Pane casereccio", qta: "4", unita: "fette" },
         { nome: "Pomodorini", qta: "200", unita: "g" },
@@ -31,7 +31,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Frulla il basilico con l'olio. Taglia a cubetti la mozzarella e i pomodori, poi stratificali nei bicchieri completando con l'olio al basilico.",
       note: "Servire ben freddo.",
-      immagine: "https://images.unsplash.com/photo-1541529086526-db283c563270?w=800",
+      immagine: require("../assets/immagini_ricette/caprese_al_bicchiere.png"),
       ingredienti: [
         { nome: "Mozzarella di bufala", qta: "250", unita: "g" },
         { nome: "Pomodori ramati", qta: "2", unita: "pz" },
@@ -49,7 +49,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Mescola la ricotta con sale, pepe e parmigiano. Inserisci un po' di composto e un'alica dentro ogni fiore, poi inforna a 180°C per 15 minuti.",
       note: "Pulisci i fiori delicatamente per non romperli.",
-      immagine: "https://images.unsplash.com/photo-1541529086526-db283c563270?w=800",
+      immagine: require("../assets/immagini_ricette/Fiori_di_Zucca_Ripieni_al_Forno.png"),
       ingredienti: [
         { nome: "Fiori di zucca", qta: "12", unita: "pz" },
         { nome: "Ricotta vaccina", qta: "200", unita: "g" },
@@ -67,7 +67,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 3,
       procedimento: "Lavora il caprino con l'erba cipollina. Spalma il composto sulle fette di salmone affumicato e arrotola delicatamente.",
       note: "Taglia a rondelle prima di servire.",
-      immagine: "https://images.unsplash.com/photo-1541529086526-db283c563270?w=800",
+      immagine: require("../assets/immagini_ricette/Rotolini_di_Salmone_e_Caprino.png"),
       ingredienti: [
         { nome: "Salmone affumicato", qta: "150", unita: "g" },
         { nome: "Formaggio caprino", qta: "160", unita: "g" },
@@ -84,7 +84,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 6,
       procedimento: "Prepara il riso allo zafferano e lascialo raffreddare. Forma delle palline inserendo al centro il ragù ristretto e un cubetto di caciocavallo, impana e friggi.",
       note: "Il ragù deve essere densissimo e freddo di frigo.",
-      immagine: "https://images.unsplash.com/photo-1541529086526-db283c563270?w=800",
+      immagine: require("../assets/immagini_ricette/arancinetti_al_ragu.png"),
       ingredienti: [
         { nome: "Riso per risotti", qta: "300", unita: "g" },
         { nome: "Ragù di carne", qta: "150", unita: "g" },
@@ -102,7 +102,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Prepara la polenta, stendila e lasciala rassodare. Tagliala a fette e grigliala. Cuoci i funghi in padella con aglio e prezzemolo e adagiali sulla polenta.",
       note: "Puoi aggiungere una fetta di scamorza fusa sopra.",
-      immagine: "https://images.unsplash.com/photo-1541529086526-db283c563270?w=800",
+      immagine: require("../assets/immagini_ricette/crostini_polenta_e_funghi.png"),
       ingredienti: [
         { nome: "Polenta istantanea", qta: "200", unita: "g" },
         { nome: "Funghi misti", qta: "300", unita: "g" },
@@ -120,7 +120,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 2,
       procedimento: "Taglia a cubetti piccoli il tonno abbattuto e l'avocado. Condisci il tonno con succo di lime, olio, sale e unisci la composizione usando un coppapasta.",
       note: "Assicurati che il pesce sia freschissimo e precedentemente abbattuto.",
-      immagine: "https://images.unsplash.com/photo-1541529086526-db283c563270?w=800",
+      immagine: require("../assets/immagini_ricette/Tartare_di_tonno_e_avocado.png"),
       ingredienti: [
         { nome: "Filetto di tonno", qta: "200", unita: "g" },
         { nome: "Avocado", qta: "1", unita: "pz" },
@@ -137,7 +137,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Affetta finemente le zucchine con una mandolina. Disponile su un piatto, condisci con limone, olio, sale e scaglie di parmigiano.",
       note: "Lascia marinare 5 minuti prima di servire.",
-      immagine: "https://images.unsplash.com/photo-1541529086526-db283c563270?w=800",
+      immagine: require("../assets/immagini_ricette/carpaccio_di_zucchine.png"),
       ingredienti: [
         { nome: "Zucchine chiare", qta: "3", unita: "pz" },
         { nome: "Parmigiano reggiano", qta: "50", unita: "g" },
@@ -154,7 +154,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 6,
       procedimento: "Mescola farina, uova, latte e olio. Aggiungi zucchine grattugiate, pancetta a cubetti e lievito istantaneo. Versa negli stampini e inforna a 180°C per 25 min.",
       note: "Ottimi sia caldi che freddi.",
-      immagine: "https://images.unsplash.com/photo-1541529086526-db283c563270?w=800",
+      immagine: require("../assets/immagini_ricette/muffin_zucchine_e_pancetta.png"),
       ingredienti: [
         { nome: "Farina 00", qta: "200", unita: "g" },
         { nome: "Zucchine", qta: "1", unita: "pz" },
@@ -172,7 +172,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Scalda la panna con il gorgonzola finché non si scioglie. Riempi i vol-au-vent pronti con la crema e guarnisci ogni pezzo con un gheriglio di noce.",
       note: "Scalda i cestini in forno 2 minuti prima di riempirli.",
-      immagine: "https://images.unsplash.com/photo-1541529086526-db283c563270?w=800",
+      immagine: require("../assets/immagini_ricette/voul-au-vent_fonduta_e_noci.png"),
       ingredienti: [
         { nome: "Vol-au-vent pronti", qta: "12", unita: "pz" },
         { nome: "Gorgonzola dolce", qta: "100", unita: "g" },
@@ -190,7 +190,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Pulisci i gamberi lasciando la coda. Avvolgi ogni gambero con una strisciolina di sfoglia, spennella con uovo ed inforna a 200°C per 12 minuti.",
       note: "Accompagnali con della salsa rosa.",
-      immagine: "https://images.unsplash.com/photo-1541529086526-db283c563270?w=800",
+      immagine: require("../assets/immagini_ricette/gamberi_in_sfoglia.png"),
       ingredienti: [
         { nome: "Code di gambero", qta: "12", unita: "pz" },
         { nome: "Pasta sfoglia rotolo", qta: "1", unita: "pz" },
@@ -207,7 +207,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Frulla nel mixer i ceci cotti con la tahina, il succo di limone, lo spicchio d'aglio, un filo d'olio e cumino fino a consistenza vellutata.",
       note: "Aggiungi acqua fredda se l'hummus risulta troppo denso.",
-      immagine: "https://images.unsplash.com/photo-1541529086526-db283c563270?w=800",
+      immagine: require("../assets/immagini_ricette/hummus_di_ceci_e_crostino.png"),
       ingredienti: [
         { nome: "Ceci precotti", qta: "240", unita: "g" },
         { nome: "Tahina (pasta di sesamo)", qta: "2", unita: "cucchiai" },
@@ -225,7 +225,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 3,
       procedimento: "Amalgama la ricotta asciutta con parmigiano, sale e pepe. Crea delle polpettine con le mani e rotolale nei taralli precedentemente sbriciolati.",
       note: "Fai riposare in frigo mezz'ora.",
-      immagine: "https://images.unsplash.com/photo-1541529086526-db283c563270?w=800",
+      immagine: require("../assets/immagini_ricette/poplpette_di_ricotta.png"),
       ingredienti: [
         { nome: "Ricotta pecora", qta: "250", unita: "g" },
         { nome: "Parmigiano", qta: "40", unita: "g" },
@@ -242,7 +242,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Rendi le uova sode, tagliale a metà ed estrai i tuorli. Frulla i tuorli con tonno, maionese e capperi. Riempi gli albumi con il composto.",
       note: "Usa una sac-à-poche per un effetto più elegante.",
-      immagine: "https://images.unsplash.com/photo-1541529086526-db283c563270?w=800",
+      immagine: require("../assets/immagini_ricette/uova_ripiene.png"),
       ingredienti: [
         { nome: "Uova", qta: "4", unita: "pz" },
         { nome: "Tonno sott'olio sgocciolato", qta: "80", unita: "g" },
@@ -260,7 +260,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Impasta farina, acqua, un pizzico di lievito e strutto. Fai riposare l'impasto, stendilo, taglia dei rombi e friggi in abbondante olio caldo.",
       note: "Servi immediatamente con prosciutto crudo e stracchino.",
-      immagine: "https://images.unsplash.com/photo-1541529086526-db283c563270?w=800",
+      immagine: require("../assets/immagini_ricette/tagliere_pasta_fritta.png"),
       ingredienti: [
         { nome: "Farina 00", qta: "250", unita: "g" },
         { nome: "Lievito di birra fresco", qta: "5", unita: "g" },
@@ -282,7 +282,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 2,
       procedimento: "Rosola il guanciale. Sbatti i tuorli con il pecorino romano e pepe. Scola la pasta al dente, uniscila al guanciale, spegni il fuoco e versa la crema d'uovo.",
       note: "Niente panna, mi raccomando!",
-      immagine: "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800",
+      immagine: require("../assets/immagini_ricette/carbonara.png"),
       ingredienti: [
         { nome: "Spaghetti", qta: "200", unita: "g" },
         { nome: "Guanciale", qta: "100", unita: "g" },
@@ -300,7 +300,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 2,
       procedimento: "Mentre la pasta cuoce, fai soffriggere dolcemente l'aglio schiacciato e il peperoncino nell'olio. Salta la pasta direttamente nella padella con acqua di cottura.",
       note: "L'aglio non deve assolutamente bruciare.",
-      immagine: "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800",
+      immagine: require("../assets/immagini_ricette/spaghetti_aglio_olio_peperoncino.png"),
       ingredienti: [
         { nome: "Spaghetti", qta: "180", unita: "g" },
         { nome: "Olio EVO", qta: "4", unita: "cucchiai" },
@@ -318,7 +318,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 3,
       procedimento: "Tosta il riso con uno scalogno, sfuma con vino bianco e cuoci aggiungendo brodo bollente poco alla volta insieme ai porcini. Manteca alla fine con burro e parmigiano.",
       note: "Usa brodo vegetale leggero.",
-      immagine: "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800",
+      immagine: require("../assets/immagini_ricette/risotto_funghi.png"),
       ingredienti: [
         { nome: "Riso Carnaroli", qta: "240", unita: "g" },
         { nome: "Funghi porcini (freschi o surgelati)", qta: "250", unita: "g" },
@@ -336,7 +336,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 6,
       procedimento: "Prepara il ragù (cottura 2 ore) e la besciamella. In una teglia alterna strati di sfoglia, ragù, besciamella e parmigiano. Inforna a 180°C per 35 minuti.",
       note: "Fai riposare le lasagne 10 minuti fuori dal forno prima di tagliarle.",
-      immagine: "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800",
+      immagine: require("../assets/immagini_ricette/lasagna_alla_bolognese.png"),
       ingredienti: [
         { nome: "Sfoglie all'uovo", qta: "250", unita: "g" },
         { nome: "Ragù misto bolognese", qta: "500", unita: "g" },
@@ -354,7 +354,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Cuoci gli gnocchi in acqua salata. Scolali e mescolali con il sugo di pomodoro basilico. Metti tutto in una pirofila con il fiordilatte e passa al grill per 5 minuti.",
       note: "Usa gnocchi freschi di buona qualità.",
-      immagine: "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800",
+      immagine: require("../assets/immagini_ricette/gnocchi_sorrentina.png"),
       ingredienti: [
         { nome: "Gnocchi di patate", qta: "800", unita: "g" },
         { nome: "Passata di pomodoro", qta: "400", unita: "g" },
@@ -372,7 +372,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 2,
       procedimento: "Soffriggi aglio e peperoncino nell'olio, aggiungi i pomodori pelati schiacciati e cuoci per 10 minuti. Salta le penne al dente nel sugo.",
       note: "Completa con prezzemolo fresco tritato alla fine se gradito.",
-      immagine: "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800",
+      immagine: require("../assets/immagini_ricette/penne_all'arrrabbiata.png"),
       ingredienti: [
         { nome: "Penne rigate", qta: "180", unita: "g" },
         { nome: "Pomodori pelati", qta: "250", unita: "g" },
@@ -390,7 +390,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 3,
       procedimento: "Cuoci a cubetti la zucca e le patate nel brodo. Verso fine cottura aggiungi lo zenzero grattugiato. Frulla tutto con un mixer a immersione fino a crema.",
       note: "Accompagna con crostini di pane al rosmarino.",
-      immagine: "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800",
+      immagine: require("../assets/immagini_ricette/vellutata_di_zucca.png"),
       ingredienti: [
         { nome: "Zucca pulita", qta: "600", unita: "g" },
         { nome: "Patate", qta: "1", unita: "pz" },
@@ -408,7 +408,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Lessa nella stessa acqua della pasta le patate a cubetti e i fagiolini. Aggiungi le trofie. Scola tutto insieme e condisci a freddo con il pesto genovese.",
       note: "Conserva un po' di acqua di cottura per diluire il pesto.",
-      immagine: "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800",
+      immagine: require("../assets/immagini_ricette/trofie_pesto_patate_fagiolini.png"),
       ingredienti: [
         { nome: "Trofie fresche", qta: "400", unita: "g" },
         { nome: "Pesto alla Genovese", qta: "150", unita: "g" },
@@ -426,7 +426,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 2,
       procedimento: "Tosta il riso con cipolla e burro, sfuma col vino. Cuoci aggiungendo brodo poco alla volta. Sciogli lo zafferano alla fine e manteca energicamente al dente fuori dal fuoco.",
       note: "Manteca a fuoco spento ('all'onda').",
-      immagine: "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800",
+      immagine: require("../assets/immagini_ricette/risotto_zafferano.png"),
       ingredienti: [
         { nome: "Riso Carnaroli", qta: "160", unita: "g" },
         { nome: "Zafferano in pistilli o bustina", qta: "1", unita: "bustina" },
@@ -444,7 +444,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Apri le cozze in padella. In un'altra cucina i calamari a rondelle con aglio e pomodorini per 15 min. Unisci i liquidi filtrati, la pasta al dente e salta intensamente.",
       note: "Usa frutti di mare freschi.",
-      immagine: "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800",
+      immagine: require("../assets/immagini_ricette/calamarata_allo_scoglio.png"),
       ingredienti: [
         { nome: "Pasta Calamarata", qta: "350", unita: "g" },
         { nome: "Calamari freschi", qta: "300", unita: "g" },
@@ -462,7 +462,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 2,
       procedimento: "Tosta il pepe macinato in padella. Crea un pastone denso unendo pecorino e acqua tiepida di cottura. Scola la pasta sul pepe, muovi e inserisci la crema di formaggio.",
       note: "Attenzione alla temperatura dell'acqua, non deve scottare la crema.",
-      immagine: "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800",
+      immagine: require("../assets/immagini_ricette/pasta_cacio_e_pepe.png"),
       ingredienti: [
         { nome: "Tonnarelli o Spaghetti", qta: "200", unita: "g" },
         { nome: "Pecorino Romano", qta: "80", unita: "g" },
@@ -479,7 +479,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 3,
       procedimento: "Pulisci le cime di rapa e lessale con le orecchiette. In una padella sciogli i filetti di acciuga nell'olio con aglio e peperoncino. Scola la pasta e ripassa.",
       note: "I taralli sbriciolati sopra donano un tocco croccante superbo.",
-      immagine: "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800",
+      immagine: require("../assets/immagini_ricette/orecchiette_rape.png"),
       ingredienti: [
         { nome: "Orecchiette fresche", qta: "350", unita: "g" },
         { nome: "Cime di rapa pulite", qta: "500", unita: "g" },
@@ -497,7 +497,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 2,
       procedimento: "Fai spurgare le vongole. Aprile in padella con olio, aglio e gambi di prezzemolo. Scola gli spaghetti molto al dente e finisci la cottura nel liquido delle vongole.",
       note: "Filtra sempre il liquido delle vongole per eliminare residui di sabbia.",
-      immagine: "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800",
+      immagine: require("../assets/immagini_ricette/spaghetti_alle_vongole.png"),
       ingredienti: [
         { nome: "Spaghetti", qta: "180", unita: "g" },
         { nome: "Vongole veraci", qta: "500", unita: "g" },
@@ -515,7 +515,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Affetta i porri e falli appassire nel burro. Aggiungi le patate a cubetti e il brodo vegetale. Cuoci per 25 minuti, poi frulla il tutto aggiungendo un goccio di panna.",
       note: "Puoi servirla guarnita con erba cipollina tritata.",
-      immagine: "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800",
+      immagine: require("../assets/immagini_ricette/crema_porri_patate.png"),
       ingredienti: [
         { nome: "Porri", qta: "3", unita: "pz" },
         { nome: "Patate medie", qta: "2", unita: "pz" },
@@ -533,7 +533,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Lessa gli spinaci, strizzali benissimo e tritali. Mescolali con ricotta, uovo e noce moscata. Riempi i cannelloni, adagiali in teglia coperti di besciamella e inforna a 190°C per 25 minuti.",
       note: "Copri con carta alluminio i primi 15 minuti di cottura.",
-      immagine: "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800",
+      immagine: require("../assets/immagini_ricette/cannelloni.png"),
       ingredienti: [
         { nome: "Cannelloni di pasta pronti", qta: "12", unita: "pz" },
         { nome: "Ricotta vaccina", qta: "400", unita: "g" },
@@ -541,8 +541,7 @@ export const INITIAL_RECIPES : Recipe[] = [
         { nome: "Besciamella ready", qta: "400", unita: "ml" }
       ]
     },
-  
-    // ==========================================
+  // ==========================================
     // SECONDI PIATTI (15 Ricette)
     // ==========================================
     {
@@ -555,7 +554,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 2,
       procedimento: "Passa la carne prima nell'uovo sbattuto e poi nel pangrattato pressando bene. Friggi nel burro spumeggiante voltandola una sola volta.",
       note: "Non bucare mai la carne durante la cottura.",
-      immagine: "https://images.unsplash.com/photo-1532597311687-5c2dc87fff52?w=800",
+      immagine: require("../assets/immagini_ricette/cotoletta_alla_milanese.png"),
       ingredienti: [
         { nome: "Costolette di vitello con osso", qta: "2", unita: "pz" },
         { nome: "Uova", qta: "2", unita: "pz" },
@@ -573,7 +572,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Impasta la carne con uovo, pane bagnato nel latte, parmigiano e aglio. Forma le polpette, tuffale nella passata di pomodoro e cuoci coperto per 35 minuti.",
       note: "Il giorno dopo sono ancora più buone.",
-      immagine: "https://images.unsplash.com/photo-1532597311687-5c2dc87fff52?w=800",
+      immagine: require("../assets/immagini_ricette/polpette_al_sugo_della_nonna.png"),
       ingredienti: [
         { nome: "Macinato misto (bovino/suino)", qta: "400", unita: "g" },
         { nome: "Uova", qta: "1", unita: "pz" },
@@ -591,7 +590,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 3,
       procedimento: "Infarina le fettine. Rosolale nel burro un paio di minuti per lato. Toglile dalla padella, versa il succo di limone per creare la salsa e reinstaura la carne.",
       note: "Usa fuoco vivo per velocizzare la cremina.",
-      immagine: "https://images.unsplash.com/photo-1532597311687-5c2dc87fff52?w=800",
+      immagine: require("../assets/immagini_ricette/scaloppine_al_limone.png"),
       ingredienti: [
         { nome: "Fettine di lonza di maiale", qta: "6", unita: "pz" },
         { nome: "Farina 00", qta: "30", unita: "g" },
@@ -609,7 +608,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 2,
       procedimento: "Disponi i filetti su un foglio di carta forno. Aggiungi pomodorini a metà, olive, un filo d'oilio e chiudi a pacchetto. Inforna a 180°C per 20 minuti.",
       note: "Mantiene intatti tutti i succhi del pesce.",
-      immagine: "https://images.unsplash.com/photo-1532597311687-5c2dc87fff52?w=800",
+      immagine: require("../assets/immagini_ricette/filetto_di_orata_al_cartoccio.png"),
       ingredienti: [
         { nome: "Filetti di orata puliti", qta: "2", unita: "pz" },
         { nome: "Pomodorini", qta: "8", unita: "pz" },
@@ -626,7 +625,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 3,
       procedimento: "Cuoci le patate a fette sottili in padella con abbondante cipolla finché non sono tenere. Sbattile uova e rovesciale sopra, cuocendo da ambo i lati.",
       note: "Usa un piatto piano grande per girarla senza romperla.",
-      immagine: "https://images.unsplash.com/photo-1532597311687-5c2dc87fff52?w=800",
+      immagine: require("../assets/immagini_ricette/frittata_di_patate_e_cipolle.png"),
       ingredienti: [
         { nome: "Uova grandi", qta: "5", unita: "txt" },
         { nome: "Patate", qta: "2", unita: "pz" },
@@ -643,7 +642,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 2,
       procedimento: "Salta gli straccetti di manzo a fuoco altissimo in padella con olio per un paio di minuti soltanto. Impiatta subito sopra un letto di rucola e scaglie di grana.",
       note: "La padella deve fumare per cuocere la carne all'istante senza far uscire i liquidi.",
-      immagine: "https://images.unsplash.com/photo-1532597311687-5c2dc87fff52?w=800",
+      immagine: require("../assets/immagini_ricette/straccetti_di_manzo_con_rucola_e_grana.png"),
       ingredienti: [
         { nome: "Straccetti di manzo sottili", qta: "300", unita: "g" },
         { nome: "Rucola fresca", qta: "50", unita: "g" },
@@ -660,7 +659,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Rosola la carne infarina con un trito di sedano carota cipolla. Sfuma con vino, copri con brodo o pomodoro e stracuoce per 1 ora. Unisci patate e piselli l'ultima mezz'ora.",
       note: "Usa tagli di carne adatti alle lunghe cotture (es. cappello del prete).",
-      immagine: "https://images.unsplash.com/photo-1532597311687-5c2dc87fff52?w=800",
+      immagine: require("../assets/immagini_ricette/spezzatino_con_patate_e_piselli.png"),
       ingredienti: [
         { nome: "Bocconcini di manzo", qta: "600", unita: "g" },
         { nome: "Patate grandi", qta: "3", unita: "pz" },
@@ -678,7 +677,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Rosola i pezzi di pollo con aglio e rosmarino. Sfuma con il vino bianco, aggiungi i pomodori pelati e le olive. Lascia sobbollire coperto per 40 minuti.",
       note: "Puoi usare anche il pollo intero tagliato a pezzi piccoli.",
-      immagine: "https://images.unsplash.com/photo-1532597311687-5c2dc87fff52?w=800",
+      immagine: require("../assets/immagini_ricette/pollo_alla_cacciatora.png"),
       ingredienti: [
         { nome: "Pollo a pezzi", qta: "800", unita: "g" },
         { nome: "Pomodori pelati", qta: "400", unita: "g" },
@@ -696,7 +695,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 2,
       procedimento: "Affetta una patata finissimamente. Adagia le patate sopra i filetti di salmone a scaglie. Spennella d'olio e rosmarino e inforna a 200°C per 20 minuti fino a doratura.",
       note: "Usa una mandolina per tagliare le patate trasparenti.",
-      immagine: "https://images.unsplash.com/photo-1532597311687-5c2dc87fff52?w=800",
+      immagine: require("../assets/immagini_ricette/salmone_in_crosta_di_patate.png"),
       ingredienti: [
         { nome: "Filetto di salmone fresco", qta: "2", unita: "pz" },
         { nome: "Patata grande", qta: "1", unita: "pz" },
@@ -713,7 +712,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Affetta e friggi le melanzane. Componi a strati alternando melanzane, sugo ristretto, mozzarella asciutta e parmigiano. Inforna a 180°C per 30 minuti.",
       note: "Fai spurgare le melanzane sotto sale prima di friggerle per togliere l'amaro.",
-      immagine: "https://images.unsplash.com/photo-1532597311687-5c2dc87fff52?w=800",
+      immagine: require("../assets/immagini_ricette/parmigiana_di_melanzane.png"),
       ingredienti: [
         { nome: "Melanzane tonde", qta: "3", unita: "pz" },
         { nome: "Passata di pomodoro", qta: "500", unita: "g" },
@@ -731,7 +730,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 3,
       procedimento: "Taglia le seppie a strisce. Cuocile in padella con cipolla, sfuma con vino e aggiungi un goccio di concentrato. Unisci i piselli a metà cottura lasciando sobbollire.",
       note: "Se le seppie sono grandi avranno bisogno di qualche minuto in più.",
-      immagine: "https://images.unsplash.com/photo-1532597311687-5c2dc87fff52?w=800",
+      immagine: require("../assets/immagini_ricette/seppie_con_i_piselli.png"),
       ingredienti: [
         { nome: "Seppie pulite", qta: "500", unita: "g" },
         { nome: "Piselli surgelati", qta: "250", unita: "g" },
@@ -748,7 +747,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 2,
       procedimento: "Prepara un sugo veloce con aglio, olio e pomodoro. Fai delle piccole conche nel sugo e rompici dentro le uova intere. Copri e cuoci 5 minuti finché l'albume si rapprende.",
       note: "Il tuorlo deve rimanere cremoso e liquido.",
-      immagine: "https://images.unsplash.com/photo-1532597311687-5c2dc87fff52?w=800",
+      immagine: require("../assets/immagini_ricette/uova_in_purgatorio.png"),
       ingredienti: [
         { nome: "Uova", qta: "4", unita: "pz" },
         { nome: "Passata di pomodoro", qta: "300", unita: "g" },
@@ -765,7 +764,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 3,
       procedimento: "Farcisci le fettine con prosciutto e una fetta di formaggio. Arrotola e fissa con stuzzicandenti. Rosola in padella, poi cuoci nel pomodoro per 25 minuti.",
       note: "Il sugo ottenuto diventa eccezionale per condire la pasta.",
-      immagine: "https://images.unsplash.com/photo-1532597311687-5c2dc87fff52?w=800",
+      immagine: require("../assets/immagini_ricette/involtini_di_vitello_al_sugo.png"),
       ingredienti: [
         { nome: "Fettine di vitello", qta: "6", unita: "pz" },
         { nome: "Prosciutto cotto", qta: "3", unita: "fette" },
@@ -783,7 +782,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 2,
       procedimento: "Cucina l'hamburger sulla piastra rovente per 3-4 minuti a lato. Negli ultimi istanti metti il cheddar sopra a fondere. Componi il panino con insalata e salse.",
       note: "Non schiacciare mai l'hamburger sulla piastra con la spatola.",
-      immagine: "https://images.unsplash.com/photo-1532597311687-5c2dc87fff52?w=800",
+      immagine: require("../assets/immagini_ricette/hamburger_gourmet_fatto_in_casa.png"),
       ingredienti: [
         { nome: "Svizzerone di scottona", qta: "2", unita: "pz" },
         { nome: "Cheddar a fette", qta: "2", unita: "fette" },
@@ -800,7 +799,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 6,
       procedimento: "Lega la carne con gli aromi. Sigillala in padella caldissima con olio e burro. Trasferisci in una teglia capiente con le patate a tocchetti, bagna col vino e inforna a 180°C per un'ora abbondante.",
       note: "Fai riposare coperto da stagnola 15 minuti prima di affettarlo così da distribuire i succhi.",
-      immagine: "https://images.unsplash.com/photo-1532597311687-5c2dc87fff52?w=800",
+      immagine: require("../assets/immagini_ricette/arrosto_della_domenica_con_patate.png"),
       ingredienti: [
         { nome: "Sottofesa di vitello o arista", qta: "1", unita: "kg" },
         { nome: "Patate", qta: "800", unita: "g" },
@@ -822,7 +821,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 6,
       procedimento: "Monta i tuorli con lo zucchero, unisci il mascarpone e gli albumi a neve. Alterna savoiardi inzuppati nel caffè con la crema, termina con cacao in polvere.",
       note: "Usa uova freschissime a temperatura ambiente.",
-      immagine: "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800",
+      immagine: require("../assets/immagini_ricette/tiramisu_classico.png"),
       ingredienti: [
         { nome: "Mascarpone", qta: "500", unita: "g" },
         { nome: "Savoiardi", qta: "300", unita: "g" },
@@ -840,7 +839,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 8,
       procedimento: "Monta uova e zucchero a lungo. Unisci farina e fecola setacciate, il burro fuso tiepido e il lievito. Inforna a 180°C per 35 minuti.",
       note: "La fecola garantisce una sofficità unica.",
-      immagine: "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800",
+      immagine: require("../assets/immagini_ricette/torta_margherita_soffice.png"),
       ingredienti: [
         { nome: "Farina 00", qta: "150", unita: "g" },
         { nome: "Fecola di patate", qta: "100", unita: "g" },
@@ -858,7 +857,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 6,
       procedimento: "Mescola il burro morbido con lo zucchero, il cacao e l'uovo. Aggiungi i biscotti spezzettati con le mani. Forma un cilindro nella carta forno e metti in frigo 3 ore.",
       note: "Puoi aggiungere gocce di cioccolato o nocciole tritate.",
-      immagine: "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800",
+      immagine: require("../assets/immagini_ricette/salame_al_cioccolato.png"),
       ingredienti: [
         { nome: "Biscotti secchi tipo oro saiwa", qta: "200", unita: "g" },
         { nome: "Burro", qta: "100", unita: "g" },
@@ -876,7 +875,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Scalda panna, latte e zucchero. Unisci la gelatina ammollata e versa negli stampini facendoli rassodare in frigo 4 ore. Frulla le fragole per guarnire alla fine.",
       note: "Non portare la panna a bollore estremo.",
-      immagine: "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800",
+      immagine: require("../assets/immagini_ricette/panna_cotta_alle_fragole.png"),
       ingredienti: [
         { nome: "Panna fresca liquida", qta: "400", unita: "ml" },
         { nome: "Zucchero", qta: "80", unita: "g" },
@@ -894,7 +893,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 8,
       procedimento: "Lavora velocemente farina, burro freddo, zucchero e uova per formare la frolla. Stendila in una teglia, riempi di confettura, crea le losanghe e inforna a 180°C per 30 min.",
       note: "Fai riposare la frolla in frigo 30 minuti prima di stenderla.",
-      immagine: "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800",
+      immagine: require("../assets/immagini_ricette/crostata_alla_marmellata.png"),
       ingredienti: [
         { nome: "Farina 00", qta: "300", unita: "g" },
         { nome: "Burro freddo", qta: "150", unita: "g" },
@@ -912,7 +911,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Sciogli il cioccolato a bagnomaria col burro. Incorpora i tuorli d'uovo uno alla volta. Aggiungi gli albumi precedentemente montati a neve fermissima mescolando dal basso.",
       note: "Fai riposare in frigo almeno 2 ore.",
-      immagine: "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800",
+      immagine: require("../assets/immagini_ricette/mousse_al_cioccolato_fondente.png"),
       ingredienti: [
         { nome: "Cioccolato fondente 70%", qta: "150", unita: "g" },
         { nome: "Uova", qta: "3", unita: "txt" },
@@ -929,7 +928,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 8,
       procedimento: "Frulla le mandorle. Monta burro e zucchero, unisci il cioccolato fuso, i tuorli, la farina di mandorle e per ultimi gli albumi a neve. Inforna a 170°C per 40 min.",
       note: "L'interno deve rimanere leggermente umido e morbido.",
-      immagine: "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800",
+      immagine: require("../assets/immagini_ricette/torta_caprese.png"),
       ingredienti: [
         { nome: "Mandorle pelate", qta: "200", unita: "g" },
         { nome: "Cioccolato fondente", qta: "150", unita: "g" },
@@ -945,9 +944,9 @@ export const INITIAL_RECIPES : Recipe[] = [
       tempoPreparazione: 30,
       difficolta: "Media",
       porzioni: 4,
-      procedimento: "Scalda il latte con la cannella e scorza di limone. Sbatte i tuorli con l'amido e lo zucchero, versa il latte e addensa sul fuoco. Fai raffreddare e brucia lo zucchero sopra prima di servire.",
+      procedimento: "Scalda il latte con la cannella e scorza di limone. Sbatte i tuorli con l'amido and lo zucchero, versa il latte e addensa sul fuoco. Fai raffreddare e brucia lo zucchero sopra prima di servire.",
       note: "Usa un cannello da cucina (caramellatore) per lo strato croccante.",
-      immagine: "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800",
+      immagine: require("../assets/immagini_ricette/crema_catalana.png"),
       ingredienti: [
         { nome: "Latte intero", qta: "500", unita: "ml" },
         { nome: "Tuorli d'uovo", qta: "4", unita: "pz" },
@@ -965,7 +964,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 6,
       procedimento: "Mescola gli ingredienti secchi in una ciotola e quelli liquidi in un'altra. Unisci i due composti brevemente, aggiungi le gocce di cioccolato e inforna negli stampi a 190°C per 18 min.",
       note: "Non mescolare troppo l'impasto altrimenti i muffin perdono la sofficità.",
-      immagine: "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800",
+      immagine: require("../assets/immagini_ricette/muffins_americani_con_gocce_di_cioccolato.png"),
       ingredienti: [
         { nome: "Farina 00", qta: "250", unita: "g" },
         { nome: "Gocce di cioccolato", qta: "100", unita: "g" },
@@ -983,7 +982,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 8,
       procedimento: "Monta uova e zucchero, unisci farina, latte e burro fuso. Taglia le mele a fettine e inseriscile nell'impasto tenendone qualcuna per la superficie. Inforna a 180°C per 45 minuti.",
       note: "Profuma l'impasto con della cannella in polvere.",
-      immagine: "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800",
+      immagine: require("../assets/immagini_ricette/torta_alle_mele_classica.png"),
       ingredienti: [
         { nome: "Mele golden", qta: "3", unita: "pz" },
         { nome: "Farina 00", qta: "200", unita: "g" },
@@ -1001,7 +1000,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 6,
       procedimento: "Crea un impasto con uova, zucchero, farina e mandorle intere. Forma dei filoncini e inforna a 180°C per 20 minuti. Taglia a fettine oblique e rinforna per 5 minuti a tostare.",
       note: "Vanno tagliati quando il filoncino è ancora caldo.",
-      immagine: "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800",
+      immagine: require("../assets/immagini_ricette/cantucci_pratesi_alle_mandorle.png"),
       ingredienti: [
         { nome: "Farina 00", qta: "250", unita: "g" },
         { nome: "Zucchero", qta: "150", unita: "g" },
@@ -1019,7 +1018,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Prepara la frolla. Ricava dei cerchi, a metà dei quali farai un foro centrale più piccolo. Inforna a 180°C per 10 minuti. Farcisci la base integra con nutella e chiudi col biscotto bucato.",
       note: "Spolvera di zucchero a velo prima di unire le due parti.",
-      immagine: "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800",
+      immagine: require("../assets/immagini_ricette/biscotti_occhio_di_bue.png"),
       ingredienti: [
         { nome: "Pasta frolla pronta", qta: "1", unita: "rotolo" },
         { nome: "Nutella o crema spalmabile", qta: "150", unita: "g" },
@@ -1036,7 +1035,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 6,
       procedimento: "Impasta farina, uova, burro, zucchero e un goccio di grappa o liquore. Stendi la sfoglia sottilissima col matterello, taglia dei rettangoli e friggi in olio bollente.",
       note: "La sfoglia deve essere quasi trasparente per fare le bolle.",
-      immagine: "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800",
+      immagine: require("../assets/immagini_ricette/chiacchiere_di_carnevale.png"),
       ingredienti: [
         { nome: "Farina 00", qta: "300", unita: "g" },
         { nome: "Uova", qta: "2", unita: "pz" },
@@ -1054,7 +1053,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Scalda il latte con la vaniglia. Sbatti i tuorli con lo zucchero e l'amido. Versa il latte caldo a filo, rimetti sul fuoco basso e mescola continuamente fino a densità desiderata.",
       note: "Copri con pellicola a contatto per evitare la pellicina sopra.",
-      immagine: "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800",
+      immagine: require("../assets/immagini_ricette/crema_pasticcera_alla_vaniglia.png"),
       ingredienti: [
         { nome: "Latte intero", qta: "500", unita: "ml" },
         { nome: "Tuorli d'uovo", qta: "4", unita: "txt" },
@@ -1072,7 +1071,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Sciogli cioccolato e burro. Unisci zucchero, uova e farina. Versa nei pirottini imburrati e congela oppure inforna subito a 200°C per esattamente 12 minuti.",
       note: "Il tempo di cottura è la chiave del successo: controlla il forno accuratamente.",
-      immagine: "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800",
+      immagine: require("../assets/immagini_ricette/souffle_al_cioccolato_dal_cuore_caldo.png"),
       ingredienti: [
         { nome: "Cioccolato fondente 60%", qta: "150", unita: "g" },
         { nome: "Burro", qta: "80", unita: "g" },
@@ -1080,8 +1079,8 @@ export const INITIAL_RECIPES : Recipe[] = [
         { nome: "Farina 00", qta: "30", unita: "g" }
       ]
     },
-  
-    // ==========================================
+
+   // ==========================================
     // SPUNTINI (15 Ricette)
     // ==========================================
     {
@@ -1094,7 +1093,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 1,
       procedimento: "Farcisci due fette di pane con il prosciutto cotto e il formaggio a fette. Scalda nel tostapane o in padella un paio di minuti per lato finché non fonde.",
       note: "Spalma un velo invisibile di burro all'esterno del pane per renderlo extra dorato.",
-      immagine: "https://images.unsplash.com/photo-1600271801401-65fe5f623a9a?w=800",
+      immagine: require("../assets/immagini_ricette/toast_classico_prosciutto_e_formaggio.png"),
       ingredienti: [
         { nome: "Pane in cassetta", qta: "2", unita: "fette" },
         { nome: "Prosciutto cotto", qta: "2", unita: "fette" },
@@ -1111,7 +1110,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 2,
       procedimento: "Mescola il tonno sgocciolato con abbondante maionese e olive tritate. Farcisci il pane per tramezzini concentrando il condimento al centro, taglia a triangolo.",
       note: "Copri con un panno umido fino al servizio per non far seccare il pane.",
-      immagine: "https://images.unsplash.com/photo-1600271801401-65fe5f623a9a?w=800",
+      immagine: require("../assets/immagini_ricette/tramezzino_veneziano_tonno_e_olive.png"),
       ingredienti: [
         { nome: "Pane per tramezzini bianco", qta: "2", unita: "fette" },
         { nome: "Tonno sott'olio", qta: "120", unita: "g" },
@@ -1129,7 +1128,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 1,
       procedimento: "Schiaccia l'avocado con succo di limone e sale e spalma sul pane tostato. Cuoci l'uovo in camicia in acqua acidulata bollente per 3 minuti e adagialo sopra.",
       note: "Rompi il tuorlo sul momento.",
-      immagine: "https://images.unsplash.com/photo-1600271801401-65fe5f623a9a?w=800",
+      immagine: require("../assets/immagini_ricette/bruschetta_all_avocado_e_uovo_in_camicia.png"),
       ingredienti: [
         { nome: "Pane di segale", qta: "1", unita: "fetta" },
         { nome: "Avocado maturo", qta: "0.5", unita: "pz" },
@@ -1146,7 +1145,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 1,
       procedimento: "Scalda la piadina un minuto per lato su una piastra rovente. Togli dal fuoco, spalma lo stracchino, aggiungi la rucola fresca, piega a metà e servi calda.",
       note: "Usa piadine sottili se ami la croccantezza.",
-      immagine: "https://images.unsplash.com/photo-1600271801401-65fe5f623a9a?w=800",
+      immagine: require("../assets/immagini_ricette/piadina_romagnola_stracchino_e_rucola.png"),
       ingredienti: [
         { nome: "Piadina romagnola pronta", qta: "1", unita: "pz" },
         { nome: "Stracchino", qta: "100", unita: "g" },
@@ -1161,9 +1160,9 @@ export const INITIAL_RECIPES : Recipe[] = [
       tempoPreparazione: 20,
       difficolta: "Bassa",
       porzioni: 4,
-      procedimento: "Ricava dei dischetti dalla sfoglia. Metti al centro un cucchiaino di pomodoro condito e un cubetto di mozzarella. Inforna a 200°C per 12 minuti.",
+      procedimento: "Ricava dei dischetti dalla sfoglia. Metti al centro un cucchiaino di pomodoro condito e un cubetto di mozzarella. Inforna a 200°C per 12 minutes.",
       note: "Finisci con un pizzico di origano secco all'uscita dal forno.",
-      immagine: "https://images.unsplash.com/photo-1600271801401-65fe5f623a9a?w=800",
+      immagine: require("../assets/immagini_ricette/pizzette_di_sfoglia_da_aperitivo.png"),
       ingredienti: [
         { nome: "Rotolo di pasta sfoglia rotondo", qta: "1", unita: "pz" },
         { nome: "Passata di pomodoro", qta: "4", unita: "cucchiai" },
@@ -1180,7 +1179,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 2,
       procedimento: "Taglia il petto di pollo a cubetti. Passali nell'uovo sbattuto e poi nei corn flakes sbriciolati finemente. Cuoci in airfryer a 190°C per 10-12 minuti.",
       note: "Spruzza un velo d'olio spray per uniformare la doratura.",
-      immagine: "https://images.unsplash.com/photo-1600271801401-65fe5f623a9a?w=800",
+      immagine: require("../assets/immagini_ricette/nuggets_di_pollo_light_in_friggitrice_ad_aria.png"),
       ingredienti: [
         { nome: "Petto di pollo", qta: "300", unita: "g" },
         { nome: "Uovo", qta: "1", unita: "pz" },
@@ -1197,7 +1196,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 3,
       procedimento: "Spalma il formaggio cremoso sulla tortilla. Aggiungi insalata sottile e straccetti di pollo avanzato (o tacchino affettato). Arrotola stretto, avvolgi in pellicola e taglia a rondelle dopo 15 min.",
       note: "Ottima ricetta svuota-frigo.",
-      immagine: "https://images.unsplash.com/photo-1600271801401-65fe5f623a9a?w=800",
+      immagine: require("../assets/immagini_ricette/rotolini_di_tortilla_con_pollo_e_formaggio.png"),
       ingredienti: [
         { nome: "Tortilla di frumento", qta: "2", unita: "pz" },
         { nome: "Formaggio spalmabile", qta: "80", unita: "g" },
@@ -1214,7 +1213,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 2,
       procedimento: "Schiaccia la polpa dell'avocado con una forchetta. Unisci pomodoro a cubetti piccolissimi, cipolla tritata fine, succo di lime, sale e coriandolo. Servi con i nachos.",
       note: "Il guacamole si ossida in fretta: aggiungi il lime immediatamente.",
-      immagine: "https://images.unsplash.com/photo-1600271801401-65fe5f623a9a?w=800",
+      immagine: require("../assets/immagini_ricette/nachos_con_salsa_guacamole_homemade.png"),
       ingredienti: [
         { nome: "Chips di tortilla (Nachos)", qta: "150", unita: "g" },
         { nome: "Avocado maturo", qta: "1", unita: "pz" },
@@ -1232,7 +1231,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 2,
       procedimento: "Impasta farina, acqua, olio, un pizzico di sale e lievito istantaneo per torte salate. Dividi in due, stendi e cuoci in padella antiaderente coperta 6 minuti per lato.",
       note: "Puoi farcirla all'interno con del formaggio prima di cuocerla.",
-      immagine: "https://images.unsplash.com/photo-1600271801401-65fe5f623a9a?w=800",
+      immagine: require("../assets/immagini_ricette/focaccina_veloce_in_padella.png"),
       ingredienti: [
         { nome: "Farina 00", qta: "150", unita: "g" },
         { nome: "Acqua", qta: "70", unita: "ml" },
@@ -1250,7 +1249,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 2,
       procedimento: "Fai scoppiare i chicchi di mais in padella con un filo d'olio coperti da coperchio. Appena caldi, versali in una ciotola capiente e mescolali velocemente con pecorino e tanto pepe.",
       note: "Il formaggio si attacca grazie al vapore caldo dei popcorn appena fatti.",
-      immagine: "https://images.unsplash.com/photo-1600271801401-65fe5f623a9a?w=800",
+      immagine: require("../assets/immagini_ricette/popcorn_gourmet_cacio_e_pepe.png"),
       ingredienti: [
         { nome: "Mais per popcorn", qta: "70", unita: "g" },
         { nome: "Pecorino grattugiato fine", qta: "30", unita: "g" },
@@ -1267,7 +1266,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 2,
       procedimento: "Lessa i baccelli congelati in acqua bollente salata per 5 minuti. Scola, passali sotto acqua fredda e cospargi generosamente con sale in fiocchi prima di sgranocchiarli.",
       note: "Si mangia solo il fagiolo interno, non la buccia!",
-      immagine: "https://images.unsplash.com/photo-1600271801401-65fe5f623a9a?w=800",
+      immagine: require("../assets/immagini_ricette/edamame_salati.png"),
       ingredienti: [
         { nome: "Baccelli edamame surgelati", qta: "200", unita: "g" },
         { nome: "Sale in fiocchi", qta: "1", unita: "pizzico" }
@@ -1283,7 +1282,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 2,
       procedimento: "Pulisci il cavolo togliendo la costa centrale dura. Spezza le foglie, condiscile con pochissimo olio sfregandole con le mani. Inforna a 170°C per 10 minuti fino a renderle friabili.",
       note: "Controlla spesso per non farle bruciare assumendo sapore amaro.",
-      immagine: "https://images.unsplash.com/photo-1600271801401-65fe5f623a9a?w=800",
+      immagine: require("../assets/immagini_ricette/chips_di_cavolo_nero_kale_chips.png"),
       ingredienti: [
         { nome: "Cavolo nero", qta: "150", unita: "g" },
         { nome: "Olio EVO", qta: "1", unita: "cucchiaino" }
@@ -1299,7 +1298,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 4,
       procedimento: "Srotola la sfoglia, spalma uno strato sottile di Nutella. Arrotola dal lato lungo stringendo bene. Taglia a rondelle di circa 2 cm, adagiale sulla teglia e cuoci a 200°C per 15 min.",
       note: "Lasciale intiepidire prima di addentarle.",
-      immagine: "https://images.unsplash.com/photo-1600271801401-65fe5f623a9a?w=800",
+      immagine: require("../assets/immagini_ricette/girelle_di_sfoglia_alla_nutella.png"),
       ingredienti: [
         { nome: "Pasta sfoglia rettangolare", qta: "1", unita: "pz" },
         { nome: "Nutella", qta: "4", unita: "cucchiai" }
@@ -1315,7 +1314,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 1,
       procedimento: "Metti nel frullatore la banana a pezzi, il latte freddo, il burro d'arachidi e un pizzico di cannella. Frulla alla massima potenza fino a consistenza spumosa e liscia.",
       note: "Se usi la banana congelata otterrai la consistenza di un milkshake.",
-      immagine: "https://images.unsplash.com/photo-1600271801401-65fe5f623a9a?w=800",
+      immagine: require("../assets/immagini_ricette/frullato_energetico_banana_e_peanut_butter.png"),
       ingredienti: [
         { nome: "Banana matura", qta: "1", unita: "pz" },
         { nome: "Latte di mandorla o vaccino", qta: "200", unita: "ml" },
@@ -1332,7 +1331,7 @@ export const INITIAL_RECIPES : Recipe[] = [
       porzioni: 6,
       procedimento: "Sbatti uova, olio e latte. Unisci farina e lievito istantaneo salato. Incorpora delicatamente a mano la feta a cubetti e le olive denocciolate. Inforna a 180°C per 35-40 min.",
       note: "Usa uno stecchino per verificare la cottura al centro.",
-      immagine: "https://images.unsplash.com/photo-1600271801401-65fe5f623a9a?w=800",
+      immagine: require("../assets/immagini_ricette/plumcake_salato_feta_e_olive.png"),
       ingredienti: [
         { nome: "Farina 00", qta: "200", unita: "g" },
         { nome: "Formaggio Feta", qta: "120", unita: "g" },
