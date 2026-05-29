@@ -409,7 +409,7 @@ export default function PantryScreen() {
                     key={cat.id} 
                     style={[styles.chip, newItem.categoria === cat.id && { backgroundColor: cat.color, borderColor: cat.color }]} 
                     onPress={() => {
-                        // MODIFICA: Logica auto-compilazione pesi
+                        
                         const isBevanda = cat.id === 'Bevande';
                         setNewItem({
                             ...newItem, 
