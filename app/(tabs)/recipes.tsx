@@ -377,7 +377,9 @@ export default function RecipesScreen() {
               activeOpacity={0.8}
               onPress={() => setSelectedId(selectedId === String(item.id) ? null : String(item.id))}
             >
-              <Image source={{ uri: item.immagine }} style={styles.cardImg} />
+              <Image 
+              source={typeof item.immagine === 'string' ? { uri: item.immagine } : item.immagine} 
+              style={styles.cardImg} />
               <View style={styles.cardContent}>
                 <View style={styles.rowBetween}>
                   <Text style={styles.title} numberOfLines={1}>{item.nome}</Text>
