@@ -20,6 +20,7 @@ import {
 import { useAppContext } from '../context/AppContext';
 
 const RECIPE_CATEGORIES = ['antipasto', 'primo', 'secondo', 'dolce', 'spuntino'];
+const AVAILABLE_UNITS = ['pz', 'g', 'kg', 'ml', 'l'];
 
 const CATEGORY_CONFIG: { [key: string]: { label: string, icon: string, type: 'ionicons' | 'material', color: string } } = {
   'all': { label: 'Tutte', icon: 'apps-outline', type: 'ionicons', color: '#fff' },
@@ -31,12 +32,12 @@ const CATEGORY_CONFIG: { [key: string]: { label: string, icon: string, type: 'io
 };
 
 const CATEGORY_IMAGES: { [key: string]: string } = {
-  'antipasto': 'https://images.unsplash.com/photo-1541529086526-db283c563270?w=800', 
-  'primo': 'https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800',    
-  'secondo': 'https://images.unsplash.com/photo-1532597311687-5c2dc87fff52?w=800',   
-  'dolce': 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800',     
-  'spuntino': 'https://images.unsplash.com/photo-1600271801401-65fe5f623a9a?w=800', 
-  'default': 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=800'    
+  'antipasto': 'https://images.unsplash.com/photo-1541529086526-db283c563270?auto=format&fit=crop&w=1200&q=80', 
+  'primo': 'https://images.unsplash.com/photo-1476124369491-e7addf5db371?auto=format&fit=crop&w=1200&q=80',    
+  'secondo': 'https://images.unsplash.com/photo-1532597311687-5c2dc87fff52?auto=format&fit=crop&w=1200&q=80',   
+  'dolce': 'https://images.unsplash.com/photo-1551024506-0bccd828d307?auto=format&fit=crop&w=1200&q=80',     
+  'spuntino': 'https://images.unsplash.com/photo-1600271801401-65fe5f623a9a?auto=format&fit=crop&w=1200&q=80', 
+  'default': 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?auto=format&fit=crop&w=1200&q=80'    
 };
 
 const getDifficultyColor = (diff: string) => {
@@ -155,11 +156,41 @@ export default function RecipesScreen() {
     setModalVisible(true);
   };
 
+  const handleIngredientChange = (index: number, field: 'nome' | 'qta' | 'unita', value: string) => {
+    const updatedIngredients = [...form.ingredienti];
+    updatedIngredients[index] = { ...updatedIngredients[index], [field]: value };
+    setForm({ ...form, ingredienti: updatedIngredients });
+  };
+
+  const toggleUnit = (index: number) => {
+    const updatedIngredients = [...form.ingredienti];
+    const currentUnit = updatedIngredients[index].unita || 'pz';
+    const currentIndex = AVAILABLE_UNITS.indexOf(currentUnit);
+    const nextIndex = (currentIndex + 1) % AVAILABLE_UNITS.length;
+    updatedIngredients[index].unita = AVAILABLE_UNITS[nextIndex];
+    setForm({ ...form, ingredienti: updatedIngredients });
+  };
+
+  const addIngredientRow = () => {
+    setForm({
+      ...form,
+      ingredienti: [...form.ingredienti, { nome: '', qta: '', unita: 'pz' }]
+    });
+  };
+
+  const removeIngredientRow = (index: number) => {
+    if (form.ingredienti.length === 1) {
+      setForm({ ...form, ingredienti: [{ nome: '', qta: '', unita: 'pz' }] });
+    } else {
+      const updatedIngredients = form.ingredienti.filter((_, i) => i !== index);
+      setForm({ ...form, ingredienti: updatedIngredients });
+    }
+  };
+
   const handleSave = () => {
     if (!form.nome.trim() || !form.procedimento.trim()) return;
   
     const catLow = form.categoria.toLowerCase().trim();
-    
     
     const selectedImg = editingRecipe?.immagine 
       ? editingRecipe.immagine 
@@ -178,7 +209,6 @@ export default function RecipesScreen() {
       ingredienti: form.ingredienti,
       immagine: selectedImg 
     };
-  
   
     if (editingRecipe) updateRecipe(recipeData);
     else addRecipe(recipeData);
@@ -251,12 +281,8 @@ export default function RecipesScreen() {
         </View>
       </View>
 
-      <View style={{ height: 110 }}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoriesContainer}
-        >
+      <View style={styles.mainFilterRow}>
+        <View style={styles.categoriesBlockContainer}>
           <TouchableOpacity
             activeOpacity={0.8}
             style={[styles.categoryCard, selectedCategory === 'all' && styles.categoryCardActive]}
@@ -293,76 +319,76 @@ export default function RecipesScreen() {
               </TouchableOpacity>
             );
           })}
-        </ScrollView>
-      </View>
+        </View>
 
-      <View style={styles.doublePillsContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsRow}>
-          <TouchableOpacity
-            style={[styles.statusPill, difficultyFilter === 'tutti' && styles.statusPillActive]}
-            onPress={() => setDifficultyFilter('tutti')}
-          >
-            <Text style={[styles.statusPillText, difficultyFilter === 'tutti' && styles.statusPillTextActive]}>
-              Tutti (Difficoltà)
-            </Text>
-          </TouchableOpacity>
+        <View style={styles.rightFiltersContainer}>
+          <View style={styles.pillsRowWrap}>
+            <TouchableOpacity
+              style={[styles.statusPill, difficultyFilter === 'tutti' && styles.statusPillActive]}
+              onPress={() => setDifficultyFilter('tutti')}
+            >
+              <Text style={[styles.statusPillText, difficultyFilter === 'tutti' && styles.statusPillTextActive]}>
+                Tutti (Difficoltà)
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.statusPill, (difficultyFilter === 'Bassa' || difficultyFilter === 'Facile') && styles.statusPillActiveState]}
-            onPress={() => setDifficultyFilter('Bassa')}
-          >
-            <Text style={styles.statusPillText}>Facili</Text>
-            <View style={[styles.dot, { backgroundColor: '#10b981' }]} />
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.statusPill, (difficultyFilter === 'Bassa' || difficultyFilter === 'Facile') && styles.statusPillActiveState]}
+              onPress={() => setDifficultyFilter('Bassa')}
+            >
+              <Text style={styles.statusPillText}>Facili</Text>
+              <View style={[styles.dot, { backgroundColor: '#10b981' }]} />
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.statusPill, difficultyFilter === 'Media' && styles.statusPillActiveState]}
-            onPress={() => setDifficultyFilter('Media')}
-          >
-            <Text style={styles.statusPillText}>Medie</Text>
-            <View style={[styles.dot, { backgroundColor: '#f97316' }]} />
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.statusPill, difficultyFilter === 'Media' && styles.statusPillActiveState]}
+              onPress={() => setDifficultyFilter('Media')}
+            >
+              <Text style={styles.statusPillText}>Medie</Text>
+              <View style={[styles.dot, { backgroundColor: '#f97316' }]} />
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.statusPill, (difficultyFilter === 'Alta' || difficultyFilter === 'Difficile') && styles.statusPillActiveState]}
-            onPress={() => setDifficultyFilter('Alta')}
-          >
-            <Text style={styles.statusPillText}>Difficili</Text>
-            <View style={[styles.dot, { backgroundColor: '#ef4444' }]} />
-          </TouchableOpacity>
-        </ScrollView>
+            <TouchableOpacity
+              style={[styles.statusPill, (difficultyFilter === 'Alta' || difficultyFilter === 'Difficile') && styles.statusPillActiveState]}
+              onPress={() => setDifficultyFilter('Alta')}
+            >
+              <Text style={styles.statusPillText}>Difficili</Text>
+              <View style={[styles.dot, { backgroundColor: '#ef4444' }]} />
+            </TouchableOpacity>
+          </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsRow}>
-          <TouchableOpacity
-            style={[styles.statusPill, timeFilter === 'tutti' && styles.statusPillActive]}
-            onPress={() => setTimeFilter('tutti')}
-          >
-            <Text style={[styles.statusPillText, timeFilter === 'tutti' && styles.statusPillTextActive]}>
-              Tutti (Tempi)
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.pillsRowWrap}>
+            <TouchableOpacity
+              style={[styles.statusPill, timeFilter === 'tutti' && styles.statusPillActive]}
+              onPress={() => setTimeFilter('tutti')}
+            >
+              <Text style={[styles.statusPillText, timeFilter === 'tutti' && styles.statusPillTextActive]}>
+                Tutti (Tempi)
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.statusPill, timeFilter === 'breve' && styles.statusPillActiveState]}
-            onPress={() => setTimeFilter('breve')}
-          >
-            <Text style={styles.statusPillText}>&lt; 20 min ⏱️</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.statusPill, timeFilter === 'breve' && styles.statusPillActiveState]}
+              onPress={() => setTimeFilter('breve')}
+            >
+              <Text style={styles.statusPillText}>&lt; 20 min ⏱️</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.statusPill, timeFilter === 'medio' && styles.statusPillActiveState]}
-            onPress={() => setTimeFilter('medio')}
-          >
-            <Text style={styles.statusPillText}>20-40 min ⏱️</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.statusPill, timeFilter === 'medio' && styles.statusPillActiveState]}
+              onPress={() => setTimeFilter('medio')}
+            >
+              <Text style={styles.statusPillText}>20-40 min ⏱️</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.statusPill, timeFilter === 'lungo' && styles.statusPillActiveState]}
-            onPress={() => setTimeFilter('lungo')}
-          >
-            <Text style={styles.statusPillText}>&gt; 40 min ⏱️</Text>
-          </TouchableOpacity>
-        </ScrollView>
+            <TouchableOpacity
+              style={[styles.statusPill, timeFilter === 'lungo' && styles.statusPillActiveState]}
+              onPress={() => setTimeFilter('lungo')}
+            >
+              <Text style={styles.statusPillText}>&gt; 40 min ⏱️</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
 
       <FlatList 
@@ -383,8 +409,12 @@ export default function RecipesScreen() {
               onPress={() => setSelectedId(selectedId === String(item.id) ? null : String(item.id))}
             >
               <Image 
-              source={ item.immagine ? (typeof item.immagine === 'string' ? { uri: item.immagine } : item.immagine)
-              : { uri: CATEGORY_IMAGES[item.categoria?.toLowerCase()?.trim()] || CATEGORY_IMAGES.default } }  style={styles.cardImg} />
+                source={ item.immagine ? (typeof item.immagine === 'string' ? { uri: item.immagine } : item.immagine)
+                : { uri: CATEGORY_IMAGES[item.categoria?.toLowerCase()?.trim()] || CATEGORY_IMAGES.default } }  
+                style={styles.cardImg} 
+                resizeMode="cover"
+                fadeDuration={0}
+              />
               <View style={styles.cardContent}>
                 <View style={styles.rowBetween}>
                   <Text style={styles.title} numberOfLines={1}>{item.nome}</Text>
@@ -530,6 +560,42 @@ export default function RecipesScreen() {
                 </View>
               </View>
 
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, marginBottom: 6 }}>
+                <Text style={[styles.label, { marginTop: 0, marginBottom: 0 }]}>INGREDIENTI *</Text>
+                <TouchableOpacity onPress={addIngredientRow} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Ionicons name="add-circle-outline" size={18} color="#007fff" />
+                  <Text style={{ color: '#007fff', fontWeight: '700', fontSize: 13 }}>Aggiungi</Text>
+                </TouchableOpacity>
+              </View>
+
+              {form.ingredienti.map((ing, index) => (
+                <View key={index} style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+                  <TextInput 
+                    style={[styles.input, { flex: 2, marginBottom: 0 }]} 
+                    value={ing.nome} 
+                    onChangeText={t => handleIngredientChange(index, 'nome', t)} 
+                    placeholder="Ingredienti (es. Farina)" 
+                  />
+                  <TextInput 
+                    style={[styles.input, { flex: 0.8, marginBottom: 0 }]} 
+                    keyboardType="numeric"
+                    value={ing.qta} 
+                    onChangeText={t => handleIngredientChange(index, 'qta', t)} 
+                    placeholder="Q.tà" 
+                  />
+                  <TouchableOpacity 
+                    activeOpacity={0.7}
+                    onPress={() => toggleUnit(index)}
+                    style={[styles.input, { flex: 0.7, marginBottom: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: '#e2e8f0' }]}
+                  >
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: '#1e293b' }}>{ing.unita || 'pz'}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => removeIngredientRow(index)} style={{ padding: 4 }}>
+                    <Ionicons name="trash-outline" size={20} color="#ef4444" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+
               <Text style={styles.label}>PROCEDIMENTO *</Text>
               <TextInput 
                 style={[styles.input, {height: 120, textAlignVertical: 'top'}]} 
@@ -584,10 +650,23 @@ const styles = StyleSheet.create({
   },
   searchInput: { flex: 1, fontSize: 15, color: '#1e293b' },
 
-  categoriesContainer: { paddingHorizontal: 16, gap: 12, alignItems: 'center' },
+  mainFilterRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap', 
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    gap: 16,
+  },
+  
+  categoriesBlockContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
   categoryCard: {
-    width: 95,
-    height: 90,
+    width: 90,
+    height: 85,
     backgroundColor: '#fff',
     borderRadius: 20,
     justifyContent: 'center',
@@ -602,29 +681,29 @@ const styles = StyleSheet.create({
   categoryCardActive: {
     backgroundColor: '#007fff',
   },
-  iconWrapper: { marginBottom: 8, justifyContent: 'center', alignItems: 'center' },
+  iconWrapper: { marginBottom: 6, justifyContent: 'center', alignItems: 'center' },
   categoryLabel: { fontSize: 11, fontWeight: '700', color: '#1e293b', textAlign: 'center' },
   categoryLabelActive: { color: '#fff' },
 
-  doublePillsContainer: {
-    paddingHorizontal: 16,
-    gap: 10,
-    marginBottom: 16,
-  },
-  pillsRow: {
-    flexDirection: 'row',
+  rightFiltersContainer: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
     gap: 8,
+    minWidth: 280, 
+  },
+  pillsRowWrap: {
+    flexDirection: 'row',
+    gap: 6,
     alignItems: 'center',
-    height: 42,
   },
   statusPill: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#e2e8f0',
-    paddingHorizontal: 14,
-    height: 36,
-    borderRadius: 18,
-    gap: 6,
+    paddingHorizontal: 10,
+    height: 32,
+    borderRadius: 16,
+    gap: 4,
   },
   statusPillActive: {
     backgroundColor: '#007fff',
@@ -634,9 +713,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#94a3b8'
   },
-  statusPillText: { fontSize: 13, fontWeight: '700', color: '#475569' },
+  statusPillText: { fontSize: 12, fontWeight: '700', color: '#475569' },
   statusPillTextActive: { color: '#fff' },
-  dot: { width: 10, height: 10, borderRadius: 5 },
+  dot: { width: 8, height: 8, borderRadius: 4 },
 
   card: { backgroundColor: '#fff', borderRadius: 24, marginHorizontal: 15, marginBottom: 18, overflow: 'hidden', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12 },
   cardImg: { width: '100%', height: 170 },
