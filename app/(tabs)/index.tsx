@@ -450,10 +450,10 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#f8fafc' },
   container: { padding: 20 },
-  header: { marginTop: 10, marginBottom: 20 }, // Ridotto margine
+  header: { marginTop: 10, marginBottom: 20 }, 
   headerMainRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
-  welcomeText: { fontSize: 14, color: '#64748b', fontWeight: '500' }, // Leggermente più piccolo
-  mainTitle: { fontSize: 24, fontWeight: 'bold', color: '#1e293b' }, // Ridotto da 30 a 24
+  welcomeText: { fontSize: 14, color: '#64748b', fontWeight: '500' }, 
+  mainTitle: { fontSize: 24, fontWeight: 'bold', color: '#1e293b' },
   statsGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 25 },
   statCard: {
     backgroundColor: '#fff',

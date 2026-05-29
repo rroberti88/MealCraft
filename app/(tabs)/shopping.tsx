@@ -17,7 +17,6 @@ import {
 } from 'react-native';
 import { useAppContext } from '../context/AppContext';
 
-// Nuove categorie basate sulla tua ricerca
 const CATEGORIES = [
   'Ortofrutta', 
   'Latticini, Salumi e Formaggi', 
@@ -29,18 +28,16 @@ const CATEGORIES = [
 
 const UNITS = ['pz', 'kg', 'g', 'l', 'ml'];
 
-// Colorazione coerente per le nuove categorie
 const CATEGORY_COLORS: { [key: string]: string } = {
-  'Ortofrutta': '#22c55e',                     // Verde brillante
-  'Latticini, Salumi e Formaggi': '#eab308',  // Giallo/Oro
-  'Carne e Pesce': '#ef4444',                 // Rosso
-  'Drogheria Alimentare (Secco)': '#a855f7', // Viola
-  'Surgelati e Gelati': '#06b6d4',            // Ciano/Ghiaccio
-  'Bevande': '#3b82f6',                       // Blu acqua
-  'Senza Categoria': '#94a3b8'                // Grigio fallback
+  'Ortofrutta': '#22c55e',                    
+  'Latticini, Salumi e Formaggi': '#eab308',  
+  'Carne e Pesce': '#ef4444',                 
+  'Drogheria Alimentare (Secco)': '#a855f7', 
+  'Surgelati e Gelati': '#06b6d4',            
+  'Bevande': '#3b82f6',                       
+  'Senza Categoria': '#94a3b8'               
 };
 
-// Placeholder contestuali aggiornati
 const CATEGORY_PLACEHOLDERS: { [key: string]: string } = {
   'Ortofrutta': 'es. Mele, Carote, Insalata...',
   'Latticini, Salumi e Formaggi': 'es. Latte, Mozzarella, Prosciutto...',
