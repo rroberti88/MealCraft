@@ -116,13 +116,28 @@ export default function PantryScreen() {
       const matchesCategory = selectedCategory === 'Tutte' || item.categoria === selectedCategory;
       const diff = getDaysDiff(item.scadenza);
       
+      const qta = Number(item.quantita) || 0;
+      const pesoSingolo = Number(item.pesoEffettivo) || 0;
+      const unita = item.unitaMisura?.toLowerCase() || '';
+      
+      const valoreTotale = pesoSingolo > 0 ? qta * pesoSingolo : qta;
+
+      let isLowStock = false;
+      if (unita === 'kg' || unita === 'l') {
+        isLowStock = valoreTotale <= 0.5; 
+      } else if (unita === 'g' || unita === 'ml') {
+        isLowStock = valoreTotale <= 500; 
+      } else {
+        isLowStock = valoreTotale <= 2;   
+      }
+
       let matchesStatus = true;
       if (statusFilter === 'Scadenze') {
         matchesStatus = diff !== null && diff <= 3;
       } else if (statusFilter === 'Esaurimento') {
-        matchesStatus = Number(item.quantita) <= 2;
+        matchesStatus = isLowStock;
       } else if (statusFilter === 'InStato') {
-        matchesStatus = diff !== null && diff > 3;
+        matchesStatus = !isLowStock && (diff === null || diff > 3);
       }
       
       return matchesSearch && matchesCategory && matchesStatus;
@@ -162,7 +177,7 @@ export default function PantryScreen() {
         const existingIndex = prevPantry.findIndex(i => 
           i.nome.toLowerCase().trim() === product.nome.toLowerCase().trim() && 
           i.scadenza === product.scadenza &&
-          i.pesoEffettivo.trim() === product.pesoEffettivo.trim()
+          String(i.pesoEffettivo).trim() === String(product.pesoEffettivo).trim()
         );
 
         if (existingIndex !== -1) {
@@ -401,7 +416,20 @@ export default function PantryScreen() {
               <Text style={styles.label}>Categoria *</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 15 }}>
                 {CATEGORIES.map(cat => (
-                  <TouchableOpacity key={cat.id} style={[styles.chip, newItem.categoria === cat.id && { backgroundColor: cat.color, borderColor: cat.color }]} onPress={() => setNewItem({...newItem, categoria: cat.id})}>
+                  <TouchableOpacity 
+                    key={cat.id} 
+                    style={[styles.chip, newItem.categoria === cat.id && { backgroundColor: cat.color, borderColor: cat.color }]} 
+                    onPress={() => {
+                        const isBevanda = cat.id === 'Bevande';
+                        setNewItem({
+                            ...newItem, 
+                            categoria: cat.id,
+                            quantita: '1',
+                            pesoEffettivo: isBevanda ? '0.5' : '500',
+                            unitaMisura: isBevanda ? 'l' : 'g'
+                        });
+                    }}
+                  >
                     <Text style={[styles.chipText, newItem.categoria === cat.id && { color: '#fff', fontWeight: 'bold' }]}>{cat.label}</Text>
                   </TouchableOpacity>
                 ))}
