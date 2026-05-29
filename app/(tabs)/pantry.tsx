@@ -120,7 +120,11 @@ export default function PantryScreen() {
       if (statusFilter === 'Scadenze') {
         matchesStatus = diff !== null && diff <= 3;
       } else if (statusFilter === 'Esaurimento') {
-        matchesStatus = Number(item.quantita) <= 2;
+        // MODIFICA: Considera esaurimento se la quantità è <= 0.5 (per kg/l) 
+        // o se il valore numerico del peso è <= 500 (per g/ml)
+        const val = Number(item.quantita) || 0;
+        const peso = Number(item.pesoEffettivo) || 0;
+        matchesStatus = val <= 0.5 || (peso > 0 && peso <= 500);
       } else if (statusFilter === 'InStato') {
         matchesStatus = diff !== null && diff > 3;
       }
@@ -401,7 +405,21 @@ export default function PantryScreen() {
               <Text style={styles.label}>Categoria *</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 15 }}>
                 {CATEGORIES.map(cat => (
-                  <TouchableOpacity key={cat.id} style={[styles.chip, newItem.categoria === cat.id && { backgroundColor: cat.color, borderColor: cat.color }]} onPress={() => setNewItem({...newItem, categoria: cat.id})}>
+                  <TouchableOpacity 
+                    key={cat.id} 
+                    style={[styles.chip, newItem.categoria === cat.id && { backgroundColor: cat.color, borderColor: cat.color }]} 
+                    onPress={() => {
+                        // MODIFICA: Logica auto-compilazione pesi
+                        const isBevanda = cat.id === 'Bevande';
+                        setNewItem({
+                            ...newItem, 
+                            categoria: cat.id,
+                            quantita: '1',
+                            pesoEffettivo: isBevanda ? '0.5' : '500',
+                            unitaMisura: isBevanda ? 'l' : 'g'
+                        });
+                    }}
+                  >
                     <Text style={[styles.chipText, newItem.categoria === cat.id && { color: '#fff', fontWeight: 'bold' }]}>{cat.label}</Text>
                   </TouchableOpacity>
                 ))}
