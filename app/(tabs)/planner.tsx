@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Modal,
   Pressable,
@@ -27,6 +27,9 @@ export default function PlannerScreen() {
   const [selectionModalVisible, setSelectionModalVisible] = useState(false);
   const [activeMealType, setActiveMealType] = useState<string | null>(null);
 
+  // Riferimento per lo scroll automatico della barra dei giorni
+  const daysScrollViewRef = useRef<ScrollView>(null);
+
   useFocusEffect(
     useCallback(() => {
       if (params?.selectedItem === 'true' && params?.item) {
@@ -49,14 +52,12 @@ export default function PlannerScreen() {
     }, [params?.selectedItem, params?.item])
   );
 
- 
   const calendarMarkedDates = useMemo(() => {
     const marked: Record<string, any> = {};
 
     Object.keys(plan).forEach((dateKey) => {
       const dayPlan = plan[dateKey];
       if (dayPlan) {
-       
         const hasMeals = Object.values(dayPlan).some((mealArray) => 
           Array.isArray(mealArray) && mealArray.length > 0
         );
@@ -79,13 +80,14 @@ export default function PlannerScreen() {
     return marked;
   }, [plan, selectedDate]);
 
-  const generateWeekDays = () => {
+  const weekDays = useMemo(() => {
     const days = [];
     const baseDate = new Date(selectedDate);
     const startOfWeek = new Date(baseDate);
     const dayOfWeek = baseDate.getDay();
     const diff = baseDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
     startOfWeek.setDate(diff);
+    
     for (let i = 0; i < 7; i++) {
       const date = new Date(startOfWeek);
       date.setDate(startOfWeek.getDate() + i);
@@ -96,7 +98,20 @@ export default function PlannerScreen() {
       });
     }
     return days;
-  };
+  }, [selectedDate]);
+
+  // Effetto per centrare o scrollare sul giorno attivo in modo sicuro
+  useEffect(() => {
+    const activeIndex = weekDays.findIndex(d => d.fullDate === selectedDate);
+    if (activeIndex !== -1 && daysScrollViewRef.current) {
+      // Ogni scheda giorno è larga 60px + 12px di margine = 72px complessivi
+      const itemWidth = 72;
+      daysScrollViewRef.current.scrollTo({
+        x: activeIndex * itemWidth,
+        animated: true,
+      });
+    }
+  }, [selectedDate, weekDays]);
 
   const mealTypes = ['COLAZIONE', 'PRANZO', 'CENA', 'SPUNTINI'];
 
@@ -117,8 +132,12 @@ export default function PlannerScreen() {
         </View>
 
         <View style={{ height: 90 }}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {generateWeekDays().map((item, index) => (
+          <ScrollView 
+            ref={daysScrollViewRef}
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+          >
+            {weekDays.map((item, index) => (
               <TouchableOpacity 
                 key={index} 
                 style={[styles.dayCard, selectedDate === item.fullDate && styles.activeDayCard]}
@@ -171,8 +190,6 @@ export default function PlannerScreen() {
                               name={!isRecipe ? "basket" : "restaurant"} 
                               size={18} 
                               color="#3b82f6" 
-                              onPointerEnterCapture={undefined} 
-                              onPointerLeaveCapture={undefined} 
                             />
                           </View>
                           <View style={styles.recipeInfo}>
@@ -197,7 +214,7 @@ export default function PlannerScreen() {
               </View>
             );
           })}
-          <View style={{height: 30}} />
+          <View style={{ height: 30 }} />
         </ScrollView>
 
         <Modal visible={selectionModalVisible} transparent animationType="slide">
