@@ -71,6 +71,7 @@ export default function ShoppingScreen() {
   const [expiryMode, setExpiryMode] = useState<'days' | 'date'>('days');
   const [expValue, setExpValue] = useState(''); 
 
+  // Normalizza l'array grezzo shoppingList, prendendo quello grezzo, pulendo le loro proprietà assegnando valori di fallback e restituendo l'array di oggetti strutturato.
   const getSectionsFromList = (): any[] => {
     if (!shoppingList || !Array.isArray(shoppingList)) return [];
 
@@ -114,6 +115,7 @@ export default function ShoppingScreen() {
 
   const sectionsData = getSectionsFromList();
 
+  // Sincronizza le modifiche locali con lo stato globale setShoppingList.
   const salvaStatoLista = (nuoveSezioni: any[]) => {
     if (!shoppingList || !Array.isArray(shoppingList) || shoppingList.length === 0) {
       setShoppingList(nuoveSezioni);
@@ -133,6 +135,8 @@ export default function ShoppingScreen() {
     }
   };
 
+
+  // Intercetta i prodotti inviati da altre schermate.
   useEffect(() => {
     if (params?.addItems) {
       const itemsToAdd = Array.isArray(params.addItems) ? params.addItems : [params.addItems];
@@ -166,6 +170,8 @@ export default function ShoppingScreen() {
     }
   }, [params?.addItems]);
 
+
+  // Crea un nuovo elemento nella lista della spesa prendendo i dati inseriti nei campi in cima alla schermata.
   const addProduct = () => {
     if (!productName.trim()) return Alert.alert("Errore", "Nome mancante");
     const newItem = {
@@ -191,6 +197,8 @@ export default function ShoppingScreen() {
     setProductName(''); setQuantity('1'); setWeight('');
   };
 
+
+  // Gestisce la checkbox di ogni elemento permettendo anche l'apertura del modal di configurazione avanzata per i parametri da avere prima di essere spostato in dispensa.
   const handlePressCheckbox = (sectionTitle: string, item: any) => {
     let attualiSezioni = JSON.parse(JSON.stringify(sectionsData));
     
@@ -219,6 +227,7 @@ export default function ShoppingScreen() {
     }
   };
 
+  // Dopo aver elaborato la data di scadenza, conferma i dettagli del prodotto acquistato all'interno del modal.
   const salvaCaratteristicheProdotto = () => {
     if (!editingItem) return;
 
@@ -270,6 +279,8 @@ export default function ShoppingScreen() {
     setEditingItem(null);
   };
 
+
+  // Permette di aumentare o diminuire le quantità con i bottoni.
   const updateQuantity = (sectionTitle: string, id: string, inc: number) => {
     const attualiSezioni = JSON.parse(JSON.stringify(sectionsData)).map((s: any) => {
       if (s.title === sectionTitle) {
@@ -294,6 +305,8 @@ export default function ShoppingScreen() {
     setIsDeleteModalVisible(true);
   };
 
+
+  // Prima di procedere con l'eliminazione del prodotto chiede conferma tramite un modal.
   const confirmDelete = () => {
     if (!itemToDelete) return;
     const attualiSezioni = JSON.parse(JSON.stringify(sectionsData)).map((s: any) => 
@@ -305,6 +318,8 @@ export default function ShoppingScreen() {
     setItemToDelete(null);
   };
 
+
+  // Effettua tutto il processo di validazione dei campi confrontando quelli della lista della spesa con quelli richiesti dalla dispensa; una volta superato questo processo esegue un ciclo su quelli validi inviandoli alla dispensa pulendo anche la lista. In questo modo la dispensa è aggiornata e la lista della spesa anche.
   const finalizeShopping = () => {
     const purchased = sectionsData.flatMap((s: any) => 
       s.data ? s.data.filter((i: any) => i.preso).map((i: any) => ({

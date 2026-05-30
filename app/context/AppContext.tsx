@@ -69,6 +69,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [activePicker, setActivePicker] = useState<PickerState | null>(null);
 
+
+  // Carica le immagini e recupera la data dell'ultimo controllo all'avvio dell'app per avere i dati sempre di qualità e aggiornati.
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -127,6 +129,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     loadData();
   }, []);
 
+
+  // Ad ogni modiifca, serializza i dati in formato JSON e li scrive su AsyncStorage.
   useEffect(() => {
     if (isLoaded) {
       const saveData = async () => {
@@ -145,6 +149,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [pantry, recipes, shoppingList, plan, isLoaded]);
 
+
+  // Utilizza il 'match' per estrarre solo i numeri e li converte in un valore decimale. Effettua quindi una pulizia delle stringhe.
   const estraiNumeroGrammi = (qtaStr: string): number => {
     if (!qtaStr) return 1;
     const pulito = qtaStr.replace(/[()]/g, '').trim();
@@ -155,6 +161,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return parseFloat(pulito) || 1;
   };
 
+
+  // Detrae i grammi di un lotto ogni qualvolta venga utilizzato in una ricetta di un giorno passato. Filtra i lotti da utilizzare per data di scadenza e quantità.
   const detraiGrammiDaDispensa = (listaDispensa: PantryItem[], nomeIngrediente: string, grammiDaDetrarre: number): PantryItem[] => {
     let _pantry = [...listaDispensa];
     let rimanenti = grammiDaDetrarre;
@@ -223,6 +231,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return _pantry;
   };
 
+
+  // Si concentra sulla data: se è passata estrae tutte le ricette o i singoli alimenti pianificati e li scala dalla dispensa.
   const eseguiSottrazioneGiorniPassati = (ilPlanner: any, laDispensa: PantryItem[], startData: string, fineData: string): PantryItem[] => {
     let dispensaAggiornata = [...laDispensa];
     
@@ -252,6 +262,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return dispensaAggiornata;
   };
 
+
+  // Consuma all'istante tutti gli ingredienti di una specifica ricetta.
   const consumaIngredientiRicetta = (ricetta: Recipe) => {
     setPantry(prev => {
       let nuovaDispensa = [...prev];
@@ -288,6 +300,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+
+  // Aggiunge pasti al calendario e attiva due controlli di automazione simultanei. Inoltre genera automaticamente la lista della spesa e scala gli ingredienti dalla dispensa se un passo è nel passato.
   const updatePlan = (date: string, mealType: string, item: any) => {
     const newItem = {
       ...item,
@@ -353,6 +367,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+
+  // Rimuove alimento o ricetta dal planner.
   const removeFromPlan = (date: string, mealType: string, instanceId: string) => {
     setPlan(prev => {
       const newPlan = { ...prev };

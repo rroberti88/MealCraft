@@ -30,6 +30,7 @@ export default function PlannerScreen() {
   // Riferimento per lo scroll automatico della barra dei giorni
   const daysScrollViewRef = useRef<ScrollView>(null);
 
+  // Richiama la funzione updatePlan dopo aver controllato se c'è un elemento selezionato e aver trasformato la stringa JSON in un oggetto per salvare il pasto nella pianificazione.
   useFocusEffect(
     useCallback(() => {
       if (params?.selectedItem === 'true' && params?.item) {
@@ -52,6 +53,7 @@ export default function PlannerScreen() {
     }, [params?.selectedItem, params?.item])
   );
 
+  // Applica un pallino blu ai giorni in cui abbiamo selezionato almeno un pasto con un elemento al suo interno.
   const calendarMarkedDates = useMemo(() => {
     const marked: Record<string, any> = {};
 
@@ -80,6 +82,7 @@ export default function PlannerScreen() {
     return marked;
   }, [plan, selectedDate]);
 
+  //Calcolo dei 7 giorni della settimana corrente per mostrarli nella barra in alto.
   const weekDays = useMemo(() => {
     const days = [];
     const baseDate = new Date(selectedDate);

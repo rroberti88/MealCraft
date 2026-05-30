@@ -79,9 +79,11 @@ export default function RecipesScreen() {
   const [difficultyFilter, setDifficultyFilter] = useState<string>('tutti');
   const [timeFilter, setTimeFilter] = useState<'tutti' | 'breve' | 'medio' | 'lungo'>('tutti');
 
+  // Se la Picker Mode è attiva la schermata sa che sta in modalità selezione per l'utente.
   const isPickerMode = activePicker?.isOpen && activePicker?.target === 'recipes';
   const mealType = activePicker?.mealType;
 
+  // Variabile calcolata ad ogni render: scorre l'array globale 'recipes' e trattiene solo gli elementi in base  ai filtri selezionati dall'utente ed, eventualmente, ai caratteri digitati nella barra di ricerca.
   const filteredRecipes = recipes.filter((recipe: any) => {
     const matchesSearch = recipe.nome?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || recipe.categoria?.toLowerCase() === selectedCategory;
@@ -102,6 +104,7 @@ export default function RecipesScreen() {
     return matchesSearch && matchesCategory && matchesDifficulty && matchesTime;
   });
 
+  // In base alle azioni dell'utente mostra la schermata di selezione o quella normale. Se l'utente clicca su 'vedi ricetta' nel planner fa uno scroll automatico della FlatList per centrare visivamente quella determinata ricetta sullo schermo.
   useEffect(() => {
     if (!isFocused) {
       closePicker();
@@ -139,11 +142,14 @@ export default function RecipesScreen() {
     ingredienti: [{ nome: '', qta: '', unita: 'pz' }]
   });
 
+
+  // Se l'utente è in Picker Mode ma cambia schermata, la chiude e pulisce i parametri di navigazione.
   const handleCancelSelection = () => {
     closePicker();
     router.setParams({ recipeIdOpen: undefined });
   };
 
+  // All'inserimento di una ricetta nel planner, confronta gli ingredienti necessari con quelli presenti in dispensa; se non c'è un ingrediente, lo inserisce nell'array 'missingIngredients' ed effettua un push per generare la lisa nello shopping rimandando l'utente al planner.
   const handleSelectForPlanner = (recipe: any) => {
     const missingIngredients: string[] = [];
     
@@ -175,6 +181,8 @@ export default function RecipesScreen() {
     closePicker(); 
   };
 
+
+  // Gestisce il riempimento automatico parziale del modal di inserimento/modifica di una ricetta.
   const openForm = (recipe?: any) => {
     if (recipe) {
       setEditingRecipe(recipe);
@@ -231,6 +239,8 @@ export default function RecipesScreen() {
     }
   };
 
+
+  // Salva i dati inviandoli al contesto globale dopo aver verificato se editingRecipe è presente, altrimenti genera un nuovo ID univoco.
   const handleSave = () => {
     if (!form.nome.trim() || !form.procedimento.trim()) return;
   
@@ -376,7 +386,6 @@ export default function RecipesScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header compresso */}
       <View style={styles.header}>
         <View style={{ flex: 1, justifyContent: 'center' }}>
           <Text style={styles.headerTitle}>{isPickerMode ? "Scegli Ricetta" : "Ricette"}</Text>
@@ -394,7 +403,6 @@ export default function RecipesScreen() {
         )}
       </View>
 
-      {/* Ricerca compressa */}
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
           <Ionicons name="search-outline" size={18} color="#94a3b8" style={{ marginRight: 6 }} />
@@ -408,7 +416,6 @@ export default function RecipesScreen() {
         </View>
       </View>
 
-      {/* Sezione Filtri ultra-compatta */}
       <View style={styles.filtersWrapper}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScrollPadding}>
           <View style={styles.categoriesBlockContainer}>
@@ -504,8 +511,7 @@ export default function RecipesScreen() {
           </View>
         }
       />
-      
-      {/* Modale Inserimento/Modifica */}
+
       <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet">
         <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
           <View style={styles.modalTop}>
@@ -593,7 +599,6 @@ export default function RecipesScreen() {
         </SafeAreaView>
       </Modal>
 
-      {/* Modale Conferma Eliminazione */}
       <Modal transparent={true} visible={deleteModalVisible} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.confirmBox}>
@@ -616,32 +621,26 @@ export default function RecipesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8fafc' },
-  // Ridotto il padding dell'header
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 10, paddingBottom: 2 },
   headerTitle: { fontSize: 22, fontWeight: '800', color: '#000' },
   cancelSelectionText: { color: '#ef4444', fontWeight: '700', fontSize: 13 },
-  // Contratto lo spazio della barra di ricerca
   searchContainer: { paddingHorizontal: 16, marginVertical: 6 },
   searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f1f5f9', paddingHorizontal: 12, paddingVertical: Platform.OS === 'ios' ? 8 : 6, borderRadius: 12 },
   searchInput: { flex: 1, fontSize: 14, color: '#1e293b' },
-  // Ridotti i margini e i gap del blocco filtri
   filtersWrapper: { flexDirection: 'column', gap: 6, marginBottom: 8 },
   horizontalScrollPadding: { paddingHorizontal: 16, alignItems: 'center' },
   categoriesBlockContainer: { flexDirection: 'row', gap: 6 },
-  // CAMBIO COMPLETO: Layout orizzontale, più basso ed elegante per risparmiare spazio verticale
   categoryCard: { flexDirection: 'row', height: 36, backgroundColor: '#fff', borderRadius: 12, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.02, shadowRadius: 3, elevation: 1 },
   categoryCardActive: { backgroundColor: '#007fff' },
   categoryLabel: { fontSize: 12, fontWeight: '700', color: '#1e293b' },
   categoryLabelActive: { color: '#fff' },
   pillsRowWrap: { flexDirection: 'row', gap: 5, alignItems: 'center' },
-  // Compresse le pillole di stato secondarie
   statusPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#e2e8f0', paddingHorizontal: 10, height: 28, borderRadius: 14, gap: 4 },
   statusPillActive: { backgroundColor: '#007fff' },
   statusPillActiveState: { backgroundColor: '#cbd5e1', borderWidth: 1, borderColor: '#94a3b8' },
   statusPillText: { fontSize: 12, fontWeight: '700', color: '#475569' },
   statusPillTextActive: { color: '#fff' },
   dot: { width: 6, height: 6, borderRadius: 3 },
-  // Card del contenuto principale
   card: { backgroundColor: '#fff', borderRadius: 20, marginHorizontal: 16, marginBottom: 14, overflow: 'hidden', elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.03, shadowRadius: 8, borderWidth: 1.5, borderColor: 'transparent' },
   focusedCard: { borderColor: '#2f95dc', shadowColor: '#2f95dc', shadowOpacity: 0.15, elevation: 5 },
   cardImg: { width: '100%', height: 150 },
