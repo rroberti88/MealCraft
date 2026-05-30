@@ -61,7 +61,7 @@ export default function PantryScreen() {
     nome: '', categoria: '', quantita: '', unitaMisura: '', pesoEffettivo: '', scadenza: '', note: ''
   });
 
-  const isPickerMode = activePicker?.isOpen && activePicker?.target === 'pantry';
+  const isPickerMode = activePicker?.isOpen && activePicker?.target === 'pantry'; //implementiamo la funzione isPickerMode per capire quando cambiare la schermata quando vogliamo selezionare un prodotto nel planner direttamente dal pantry
   const mealType = activePicker?.mealType;
 
   useEffect(() => {
@@ -70,6 +70,7 @@ export default function PantryScreen() {
     }
   }, [isFocused]);
 
+  //Funzione usata per calcolare quanti giorni mancano alla scadenza se il risultato è negativo il prodotto è scaduto
   const getDaysDiff = (dateStr: string) => {
     if (!dateStr || !dateStr.includes('-')) return null;
     try {
@@ -82,6 +83,7 @@ export default function PantryScreen() {
     } catch (e) { return null; }
   };
 
+  //Abbiamo implementato inoltre la possibilità di inserire la data di scadenza direttamente inserendo tra quanti giorni scade
   const calculateDateFromDays = (daysStr: string) => {
     const days = parseInt(daysStr) || 0;
     const targetDate = new Date();
@@ -110,6 +112,7 @@ export default function PantryScreen() {
     router.setParams({ pickerMode: undefined, mealType: undefined });
   };
 
+  //implementazione del sistema di filtraggio
   const filteredItems = useMemo(() => {
     return pantry.filter(item => {
       const matchesSearch = item.nome.toLowerCase().includes(searchQuery.toLowerCase());
@@ -145,16 +148,17 @@ export default function PantryScreen() {
   }, [pantry, searchQuery, selectedCategory, statusFilter]);
 
   const addProductToPantry = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.spring); //per creare animazioni più fluide
     
     const finalScadenza = dateMode === 'days' ? calculateDateFromDays(daysInput) : newItem.scadenza;
     const currentProductData = { ...newItem, scadenza: finalScadenza };
 
+    //caso in cui dobbiamo modificare i dati
     if (editingItemId) {
       setPantry(prevPantry => 
         prevPantry.map(item => 
           String(item.id) === String(editingItemId) 
-            ? { ...item, ...currentProductData, quantita: Number(currentProductData.quantita) }
+            ? { ...item, ...currentProductData, quantita: Number(currentProductData.quantita) } //...item , ...currentProductData serve a fondere e sovrascrivere i dati vecchi con i nuovi
             : item
         )
       );
@@ -233,6 +237,7 @@ export default function PantryScreen() {
     setFormVisible(true);
   };
 
+  //Quando l'utente compila il modulo per aggiungere o modificare un prodotto, la funzione handleSave effettua una validazione prima di salvare i dati nel contesto globale
   const handleSave = () => {
     const finalScadenza = dateMode === 'days' ? calculateDateFromDays(daysInput) : newItem.scadenza;
 

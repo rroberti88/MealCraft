@@ -13,6 +13,7 @@ import {
 import Svg, { Path } from 'react-native-svg';
 import { useAppContext } from '../context/AppContext';
 
+//Converte la data di scadenza
 const parseScadenza = (scadenza: any): number => {
   if (!scadenza || typeof scadenza !== 'string') return new Date(scadenza).getTime();
   if (scadenza.includes('/')) {
@@ -24,6 +25,10 @@ const parseScadenza = (scadenza: any): number => {
   return new Date(scadenza).getTime();
 };
 
+//Queste due funzioni servono a disegnare i segmenti del grafico a torta (Pie Chart) usando i vettori SVG (react-native-svg).
+//I grafici a torta si basano su angoli (coordinate polari), ma i computer disegnano su assi $X$ e $Y$ (coordinate cartesiane).
+//polarToCartesian converte l'angolo in punti $X, Y$. getArcPath unisce questi punti generando la stringa di comando
+//usata dal tag <Path /> di SVG per tracciare una linea curva perfetta.
 const polarToCartesian = (centerX: number, centerY: number, radius: number, angleInDegrees: number) => {
   const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
   return {
@@ -34,7 +39,7 @@ const polarToCartesian = (centerX: number, centerY: number, radius: number, angl
 
 const getArcPath = (x: number, y: number, radius: number, startAngle: number, endAngle: number) => {
   if (startAngle === endAngle) return '';
-  // Se copre l'intero cerchio (360 gradi o quasi), approssimiamo per evitare glitch dell'SVG path
+  
   let adjustedEndAngle = endAngle;
   if (endAngle - startAngle >= 360) {
     adjustedEndAngle = startAngle + 359.99;
@@ -46,16 +51,16 @@ const getArcPath = (x: number, y: number, radius: number, startAngle: number, en
 };
 
 export default function HomeScreen() {
-  const { pantry, recipes, plan } = useAppContext();
+  const { pantry, recipes, plan } = useAppContext(); //Recupera i dati globali dell'applicazione: pantry, recipes e planner.
   const router = useRouter();
 
   const todayStr = new Date().toISOString().split('T')[0];
   const recipesCount = recipes.length;
   const mealTypes = ['COLAZIONE', 'PRANZO', 'CENA', 'SPUNTINI'];
 
-  const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
+  const [viewMode, setViewMode] = useState<'week' | 'month'>('week'); //Usa uno stato locale che filtra le statistiche per mese o settimana
 
-  const currentMonthName = useMemo(() => {
+  const currentMonthName = useMemo(() => { //Per evitare di ricalcolare calcoli pesanti ad ogni singolo rendering della schermata, il codice fa un uso di useMemo per salvare il calcolo del mese corrente
     return new Date().toLocaleDateString('it-IT', { month: 'long' }).toUpperCase();
   }, []);
 
@@ -65,6 +70,7 @@ export default function HomeScreen() {
     '#3b82f6', '#6366f1', '#a855f7', '#f97316'
   ];
 
+  //Funzione per filtrare i pasti per giorno
   const getMealsForDate = (dateStr: string) => {
     if (!plan[dateStr]) return [];
     const list: any[] = [];
@@ -76,6 +82,7 @@ export default function HomeScreen() {
     return list;
   };
 
+  //Filtra l'oggetto globale plan usando la data odierna (todayStr) e organizza i pasti previsti per le 4 categorie: COLAZIONE, PRANZO, CENA, SPUNTINI.
   const todayMeals = useMemo(() => {
     return getMealsForDate(todayStr).map(m => ({
       type: m.type,
@@ -85,6 +92,7 @@ export default function HomeScreen() {
     }));
   }, [plan, todayStr]);
 
+  //Controlla i prodotti scaduti o in scadenza prossima
   const expiringItems = useMemo(() => {
     const now = new Date();
     const limitDateEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 3, 23, 59, 59).getTime();
@@ -95,6 +103,8 @@ export default function HomeScreen() {
       .sort((a, b) => a.time - b.time); 
   }, [pantry]);
 
+
+  //Genera delle stringhe di date in base alla selezione se week o month
   const targetDates = useMemo(() => {
     const current = new Date();
     const dates: string[] = [];
@@ -141,7 +151,7 @@ export default function HomeScreen() {
     return count;
   }, [plan]);
 
-  /* RISOLTO: Logica di analytics riscritta per gestire i singoli prodotti dispensa */
+  //Genera i vari diagrammi i pasti presenti nei giorni selezionati usando le stringe di date calcolate con la funzione targetDates
   const plannerAnalytics = useMemo(() => {
     const productCounts: { [key: string]: number } = {};
     const ingredientCounts: { [key: string]: number } = {};
@@ -162,7 +172,7 @@ export default function HomeScreen() {
             }
           });
         } else if (meal.nome && meal.nome.trim() !== '') {
-          // CORREZIONE: Qui si sommavano le stringhe sminchiando l'aerogramma. Ora incrementa correttamente!
+          
           const formattedIng = meal.nome.trim().toLowerCase();
           ingredientCounts[formattedIng] = (ingredientCounts[formattedIng] || 0) + 1;
         }
@@ -180,6 +190,7 @@ export default function HomeScreen() {
 
     const svgSegments = ingredientsSorted.map(([name, count], index) => {
       const percentage = totalIngredientsCounted > 0 ? count / totalIngredientsCounted : 0;
+      //per ogni ingrediente calcola la percentuale rispetto al totale e determina l'angolo di inizio (startAngle) e fine (endAngle) da passare alla funzione SVG.
       const angleDelta = percentage * 360;
       const startAngle = currentAngle;
       const endAngle = Math.max(startAngle, currentAngle + angleDelta - gapAngle);
@@ -216,6 +227,8 @@ export default function HomeScreen() {
     return Math.round(total / recipes.length);
   }, [recipes]);
 
+
+  //Esegue un controllo incrociato automatizzato: analizza tutti i pasti pianificati per i prossimi 7 giorni, estrae gli ingredienti necessari e verifica se sono presenti in pantry
   const missingIngredients = useMemo(() => {
     const requiredIngredients: { [key: string]: number } = {};
     const baseDate = new Date();
@@ -254,7 +267,8 @@ export default function HomeScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    //layout racchiuso in una safeAreaView per evitare notch dei telefoni
+    <SafeAreaView style={styles.safeArea}> 
       <StatusBar barStyle="dark-content" />
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
       

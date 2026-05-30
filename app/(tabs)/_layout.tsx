@@ -7,9 +7,10 @@ import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const colorScheme = useColorScheme(); //Rileva il tema 'light' o 'dark' del dispositivo
 
   return (
+    //implementazione dello stile diverso in base al tema
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
@@ -30,6 +31,7 @@ export default function TabLayout() {
       
  
       <Tabs.Screen
+      //divisione delle diverse schermate del tab, se selezioniamo una pagina la sua icona del tab si colora
         name="index"
         options={{
           title: 'Home',
