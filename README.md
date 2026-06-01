@@ -16,6 +16,13 @@ La documentazione completa, comprensiva di analisi dei requisiti, wireframe dell
 Per eseguire l'applicazione in ambiente locale, completare i seguenti passaggi all'interno del terminale:
 Prima di procedere, puoi consultare il file `package.json` per verificare l'elenco completo delle librerie e delle dipendenze utilizzate nel progetto.
 
+## Presentazione del Progetto (Slides)
+È possibile visionare e scaricare la presentazione completa relativa alla progettazione concettuale, logica, allo stack tecnologico e all'architettura dell'applicazione cliccando sul link sottostante:
+
+**[Scarica il powerpoint (PPX)](./documentazione/Documento_di_Progettazione%20(7).pdf)**
+
+---
+
 ### 1. Installazione delle dipendenze
 ```bash
 npm install
