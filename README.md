@@ -14,7 +14,15 @@ La documentazione completa, comprensiva di analisi dei requisiti, wireframe dell
 ## Istruzioni per l'Installazione e l'Avvio
 
 Per eseguire l'applicazione in ambiente locale, completare i seguenti passaggi all'interno del terminale:
+Prima di procedere, puoi consultare il file `package.json` per verificare l'elenco completo delle librerie e delle dipendenze utilizzate nel progetto.
 
 ### 1. Installazione delle dipendenze
 ```bash
 npm install
+```
+
+#### Avvio dell'applicazione
+Per startare l'app in ambiente locale, completare i seguenti passi all'interno del terminale:
+```bash
+npx expo start
+```
