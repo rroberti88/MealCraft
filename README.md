@@ -21,7 +21,7 @@ Prima di procedere, puoi consultare il file `package.json` per verificare l'elen
 npm install
 ```
 
-#### Avvio dell'applicazione
+#### 2. Avvio dell'Applicazione
 Per startare l'app in ambiente locale, completare i seguenti passi all'interno del terminale:
 ```bash
 npx expo start
