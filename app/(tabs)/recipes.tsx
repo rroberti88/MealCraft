@@ -1,8 +1,9 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useIsFocused } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  FlatList,
   Image,
   KeyboardAvoidingView,
   Modal,
@@ -14,8 +15,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-  FlatList
+  View
 } from 'react-native';
 import { useAppContext } from '../context/AppContext';
 
@@ -123,17 +123,21 @@ export default function RecipesScreen() {
 
         setTimeout(() => {
           const index = filteredRecipes.findIndex((r: any) => String(r.id) === targetId);
-          if (index !== -1 && flatListRef.current) {
-            flatListRef.current.scrollToIndex({
-              index,
-              animated: true,
-              viewPosition: 0.2
-            });
+          if (index !== -1 && index < filteredRecipes.length && flatListRef.current) {
+            try {
+              flatListRef.current.scrollToIndex({
+                index,
+                animated: true,
+                viewPosition: 0.2
+              });
+            } catch (error) {
+              console.warn("Scroll fallito intercettato dal blocco try/catch:", error);
+            }
           }
         }, 300);
       }
     }
-  }, [isFocused, params?.recipeIdOpen]);
+  }, [isFocused, params?.recipeIdOpen, filteredRecipes.length]);
 
   const [form, setForm] = useState({
     nome: '', descrizione: '', categoria: 'primo', tempo: '', porzioni: '', 
@@ -499,6 +503,11 @@ export default function RecipesScreen() {
         renderItem={renderRecipeItem}
         contentContainerStyle={{ paddingBottom: 60 }}
         showsVerticalScrollIndicator={false}
+
+        getItemLayout={(data, index) => (
+          { length: 230, offset: 230 * index, index } 
+        )}
+
         onScrollToIndexFailed={(info) => {
           setTimeout(() => {
             flatListRef.current?.scrollToIndex({ index: info.index, animated: true, viewPosition: 0.2 });
